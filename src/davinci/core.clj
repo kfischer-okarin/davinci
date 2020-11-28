@@ -1,4 +1,4 @@
-(ns editor.core
+(ns davinci.core
   (:gen-class))
 
 (def editor (atom {:buffer []

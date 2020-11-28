@@ -1,6 +1,6 @@
-(ns editor.core-test
+(ns davubcu.core-test
   (:require [clojure.test :refer :all]
-            [editor.core :refer :all]))
+            [davinci.core :refer :all]))
 
 (deftest a-test
   (testing "FIXME, I fail."
