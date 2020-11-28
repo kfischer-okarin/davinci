@@ -36,8 +36,8 @@
 (defn render-in-terminal
   [editor term]
   (let [[w h] (t/get-size term)]
-    (t/move-cursor term 0 0)
-    (doseq [line (take h (:buffer editor))]
+    (t/clear term)
+    (doseq [line (take (- h 1) (:buffer editor))]
       (t/put-string term (str line \newline)))
     (let [[x y] (:cursor editor)]
       (t/move-cursor term x y))))
