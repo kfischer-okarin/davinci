@@ -14,6 +14,18 @@
   (update editor :cursor
           (fn [[x y]] [(+ x dx) (+ y dy)])))
 
+(defn insert-character [character editor]
+  (let [[x y] (:cursor editor)]
+    (-> editor
+        (update-in [:buffer y] #(str (subs % 0 x) character (subs % x)))
+        (update-in [:cursor 0] #(+ % 1)))))
+
+(defn delete-previous-character [editor]
+  (let [[x y] (:cursor editor) prev-x (- x 1)]
+    (-> editor
+        (update-in [:buffer y] #(str (subs % 0 prev-x) (subs % x)))
+        (update-in [:cursor 0] #(- % 1)))))
+
 (defn open-file [filename editor]
   (assoc editor :buffer
          (clojure.string/split (slurp filename) #"\n")))
@@ -25,13 +37,15 @@
   (let [action (get-in editor [:key-bindings key])]
     (if action
       (action editor)
-      editor)))
+      (if (= (count key) 1)
+        (insert-character (first key) editor)))))
 
 (bind-key [:ctrl \q] quit-editor)
 (bind-key :up (partial move-cursor 0 -1))
 (bind-key :right (partial move-cursor 1 0))
 (bind-key :left (partial move-cursor -1 0))
 (bind-key :down (partial move-cursor 0 1))
+(bind-key :backspace (partial delete-previous-character))
 
 (defn render-in-terminal
   [editor term]
