@@ -1,4 +1,5 @@
 (ns davinci.core
+  (:require [lanterna.terminal :as t])
   (:gen-class))
 
 (def editor (atom {:buffer []
@@ -31,8 +32,6 @@
 (bind-key :right (partial move-cursor 1 0))
 (bind-key :left (partial move-cursor -1 0))
 (bind-key :down (partial move-cursor 0 1))
-
-(require '[lanterna.terminal :as t])
 
 (defn render-in-terminal
   [editor term]
