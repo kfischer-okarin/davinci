@@ -7,12 +7,23 @@
                    :key-bindings {}
                    :running true}))
 
+(defn fix-cursor-position [editor [x y]]
+  "Keep cursor inside buffer with text"
+  (let [max-y (- (count (:buffer editor)) 1)
+        fixed-y (min (max 0 y) max-y)
+        current-line (get-in editor [:buffer fixed-y])
+        max-x (count current-line)
+        fixed-x (min (max 0 x) max-x)]
+    [fixed-x fixed-y]))
+
 (defn quit-editor [editor]
   (assoc editor :running false))
 
 (defn move-cursor [dx dy editor]
   (update editor :cursor
-          (fn [[x y]] [(+ x dx) (+ y dy)])))
+          (comp
+           (partial fix-cursor-position editor)
+           (fn [[x y]]  [(+ x dx) (+ y dy)]))))
 
 (defn insert-character [character editor]
   (let [[x y] (:cursor editor)]
