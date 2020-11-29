@@ -46,7 +46,7 @@
 (bind-key :right (partial move-cursor 1 0))
 (bind-key :left (partial move-cursor -1 0))
 (bind-key :down (partial move-cursor 0 1))
-(bind-key :backspace (partial delete-previous-character))
+(bind-key :backspace delete-previous-character)
 
 (defn render-in-terminal
   [editor term]
