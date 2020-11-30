@@ -1,4 +1,5 @@
-(ns davinci.actions)
+(ns davinci.actions
+  (:require [davinci.queries :refer :all]))
 
 (defn quit-editor [editor]
   (assoc editor :running false))
@@ -17,17 +18,17 @@
            (partial fix-cursor-position editor)
            (fn [[x y]]  [(+ x dx) (+ y dy)]))))
 
-(def move-cursor-left
-  (partial move-cursor -1 0))
+(defn move-cursor-left [editor]
+  (assoc editor :cursor (position-left-of-cursor editor)))
 
-(def move-cursor-right
-  (partial move-cursor 1 0))
+(defn move-cursor-right [editor]
+  (assoc editor :cursor (position-right-of-cursor editor)))
 
-(def move-cursor-up
-  (partial move-cursor 0 -1))
+(defn move-cursor-up [editor]
+  (assoc editor :cursor (position-up-of-cursor editor)))
 
-(def move-cursor-down
-  (partial move-cursor 0 1))
+(defn move-cursor-down [editor]
+  (assoc editor :cursor (position-down-of-cursor editor)))
 
 (defn delete-previous-character [editor]
   (let [[x y] (:cursor editor) prev-x (- x 1)]
