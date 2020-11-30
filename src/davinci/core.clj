@@ -4,12 +4,15 @@
             [davinci.terminal :as t])
   (:gen-class))
 
+(defn- character-without-modifier [key]
+  (and (char? (:key key)) (empty? (:modifiers key))))
+
 (defn handle-key [key]
   (let [action (or
                 (e/get-action-for-key key)
-                (if
-                 (and (char? (:key key)) (empty? (:modifiers key)))
-                  (insert-character (:key key)) do-nothing))]
+                (if (character-without-modifier key)
+                  (insert-character (:key key))
+                  do-nothing))]
     (e/execute-action action)))
 
 (e/bind-key {:key \q :modifiers #{:ctrl}} quit-editor)
