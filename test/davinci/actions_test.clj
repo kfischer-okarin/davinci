@@ -83,3 +83,8 @@
   (let [editor {:buffer ["This is some text" "Second line is nice"] :cursor [4 1]}
         expected-next-editor {:buffer ["This is some text" "Secotnd line is nice"] :cursor [5 1]}]
     (is (= ((insert-character \t) editor) expected-next-editor))))
+
+(deftest test-insert-newline
+  (let [editor {:buffer ["This is some text" "Second line is nice"] :cursor [4 1]}
+        expected-next-editor {:buffer ["This is some text" "Seco" "nd line is nice"] :cursor [0 2]}]
+    (is (= (insert-newline editor) expected-next-editor))))

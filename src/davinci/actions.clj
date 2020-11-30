@@ -36,6 +36,16 @@
         (update-in [:buffer y] #(str (subs % 0 prev-x) (subs % x)))
         move-cursor-left)))
 
+(defn insert-newline [editor]
+  (let [[x y] (:cursor editor)
+        current (current-line editor)
+        before-cursor (subs current 0 x)
+        after-cursor (subs current x)]
+    (-> editor
+        (assoc-in [:buffer y] before-cursor)
+        (update :buffer #(into [] cat [(take (inc y) %) [after-cursor] (drop (inc y) %)]))
+        move-cursor-right)))
+
 (def do-nothing identity)
 
 (defn open-file [filename]
