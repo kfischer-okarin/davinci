@@ -1,27 +1,27 @@
 (ns davinci.editor)
 
-(def ^:private editor (atom {:buffer []
-                             :cursor [0 0]
-                             :key-bindings {}
-                             :running true}))
+(def state (atom {:buffer []
+                  :cursor [0 0]
+                  :key-bindings {}
+                  :running true}))
 
 (defn execute-action [action]
-  (swap! editor action))
+  (swap! state action))
 
 (defn is-running []
-  (:running @editor))
+  (:running @state))
 
 (defn bind-key [key action]
-  (swap! editor #(assoc-in % [:key-bindings (if (map? key) key {:key key :modifiers #{}})] action)))
+  (swap! state #(assoc-in % [:key-bindings (if (map? key) key {:key key :modifiers #{}})] action)))
 
 (defn get-action-for-key [key]
-  (get-in @editor [:key-bindings key]))
+  (get-in @state [:key-bindings key]))
 
 (defn get-buffer []
-  (:buffer @editor))
+  (:buffer @state))
 
 (defn replace-buffer [new-buffer]
   (execute-action #(assoc % :buffer new-buffer)))
 
 (defn get-cursor []
-  (:cursor @editor))
+  (:cursor @state))
