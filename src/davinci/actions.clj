@@ -36,3 +36,13 @@
         move-cursor-left)))
 
 (def do-nothing identity)
+
+(defn open-file [filename]
+  #(assoc % :buffer (clojure.string/split (slurp filename) #"\n")))
+
+(defn insert-character [character]
+  (fn [editor]
+    (let [[x y] (:cursor editor)]
+      (-> editor
+          (update-in [:buffer y] #(str (subs % 0 x) character (subs % x)))
+          (move-cursor-right)))))

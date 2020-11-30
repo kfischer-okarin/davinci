@@ -4,16 +4,6 @@
             [davinci.terminal :as t])
   (:gen-class))
 
-(defn insert-character [character]
-  (fn [editor]
-    (let [[x y] (:cursor editor)]
-      (-> editor
-          (update-in [:buffer y] #(str (subs % 0 x) character (subs % x)))
-          (move-cursor-right)))))
-
-(defn open-file [filename]
-  (clojure.string/split (slurp filename) #"\n"))
-
 (defn handle-key [key]
   (let [action (or
                 (e/get-action-for-key key)
@@ -42,7 +32,7 @@
   "I don't do a whole lot ... yet."
   ([] (println "No args"))
   ([filename]
-   (e/replace-buffer (open-file filename))
+   (e/execute-action (open-file filename))
    (let [term (t/get-terminal)]
      (t/in-terminal term
                     (while (e/is-running)
