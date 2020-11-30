@@ -5,7 +5,7 @@
   (assoc editor :running false))
 
 (defn- fix-cursor-position [editor [x y]]
-  (let [max-y (- (count (:buffer editor)) 1)
+  (let [max-y (dec (count (:buffer editor)))
         fixed-y (min (max 0 y) max-y)
         current-line (get-in editor [:buffer fixed-y])
         max-x (count current-line)
@@ -31,7 +31,7 @@
   (assoc editor :cursor (position-down-of-cursor editor)))
 
 (defn delete-previous-character [editor]
-  (let [[x y] (:cursor editor) prev-x (- x 1)]
+  (let [[x y] (:cursor editor) prev-x (dec x)]
     (-> editor
         (update-in [:buffer y] #(str (subs % 0 prev-x) (subs % x)))
         move-cursor-left)))

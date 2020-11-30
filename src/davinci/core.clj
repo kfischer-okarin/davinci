@@ -26,7 +26,7 @@
   [term]
   (let [[w h] (t/get-size term)]
     (t/clear term)
-    (doseq [line (take (- h 1) (e/get-buffer))]
+    (doseq [line (take (dec h) (e/get-buffer))]
       (t/put-string term (str line \newline)))
     (let [[x y] (e/get-cursor)]
       (t/move-cursor term x y))))
