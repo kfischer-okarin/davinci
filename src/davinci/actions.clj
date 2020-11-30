@@ -30,6 +30,10 @@
 (defn move-cursor-down [editor]
   (assoc editor :cursor (position-down-of-cursor editor)))
 
+(defn replace-lines [[start end] new-lines]
+  (fn [editor]
+    (update editor :buffer #(into [] cat [(take start %) new-lines (drop end %)]))))
+
 (defn delete-previous-character [editor]
   (let [[x y] (:cursor editor) prev-x (dec x)]
     (-> editor
@@ -40,10 +44,10 @@
   (let [[x y] (:cursor editor)
         current (current-line editor)
         before-cursor (subs current 0 x)
-        after-cursor (subs current x)]
+        after-cursor (subs current x)
+        split-line-at-cursor (replace-lines [y (inc y)] [before-cursor after-cursor])]
     (-> editor
-        (assoc-in [:buffer y] before-cursor)
-        (update :buffer #(into [] cat [(take (inc y) %) [after-cursor] (drop (inc y) %)]))
+        split-line-at-cursor
         move-cursor-right)))
 
 (def do-nothing identity)

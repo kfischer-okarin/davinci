@@ -2,6 +2,11 @@
   (:require [clojure.test :refer :all]
             [davinci.actions :refer :all]))
 
+(deftest test-replace-lines
+  (let [editor {:buffer ["Line 0" "Line 1" "Line 2" "Line 3"]}
+        expected-next-editor {:buffer ["Line 0" "New Line 0" "New Line 1" "New Line 2" "Line 3"]}]
+    (is (= ((replace-lines [1 3] ["New Line 0" "New Line 1" "New Line 2"]) editor) expected-next-editor))))
+
 (deftest test-delete-previous-character
   (let [editor {:buffer ["This is some text" "Second line is nice"] :cursor [11 0]}
         expected-next-editor {:buffer ["This is soe text" "Second line is nice"] :cursor [10 0]}]
