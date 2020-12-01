@@ -29,12 +29,11 @@
 
 (defn render-in-terminal
   [term]
-  (let [[w h] (t/get-size term)]
-    (t/clear term)
-    (doseq [line (e/get-value queries/get-visible-lines)]
-      (t/put-string term (str line \newline)))
-    (let [[x y] (e/get-cursor)]
-      (t/move-cursor term x y))))
+  (t/clear term)
+  (doseq [line (e/get-value queries/get-visible-lines)]
+    (t/put-string term (str line \newline)))
+  (let [[x y] (e/get-cursor)]
+    (t/move-cursor term x y)))
 
 (defn -main
   "I don't do a whole lot ... yet."

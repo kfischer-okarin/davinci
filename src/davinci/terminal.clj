@@ -30,6 +30,7 @@
 (defn clear
   "Clears the terminal and set cursor to [0 0]"
   [terminal]
+  (get-size terminal) ; Get size because of performance  ???
   (.clearScreen terminal)
   (move-cursor terminal 0 0))
 
