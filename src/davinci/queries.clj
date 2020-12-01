@@ -1,48 +1,48 @@
 (ns davinci.queries)
 
-(defn line-relative-to-cursor [dy]
+(defn get-line-relative-to-cursor [dy]
   (fn [editor]
     (let [[_ y] (:cursor editor)]
       (get-in editor [:buffer (+ y dy)]))))
 
-(def previous-line (line-relative-to-cursor -1))
+(def get-previous-line (get-line-relative-to-cursor -1))
 
-(def current-line (line-relative-to-cursor 0))
+(def get-current-line (get-line-relative-to-cursor 0))
 
-(def next-line (line-relative-to-cursor 1))
+(def get-next-line (get-line-relative-to-cursor 1))
 
 (defn position-left-of-cursor [editor]
   (let [[x y] (:cursor editor)]
     (if (pos? x)
       [(dec x) y]
-      (let [previous (previous-line editor)]
-        (if previous
-          [(count previous) (dec y)]
+      (let [previous-line (get-previous-line editor)]
+        (if previous-line
+          [(count previous-line) (dec y)]
           [x y])))))
 
 (defn position-right-of-cursor [editor]
   (let [[x y] (:cursor editor)
-        line (current-line editor)
-        line-length (count line)]
-    (if (< x line-length)
+        current-line (get-current-line editor)
+        current-line-length (count current-line)]
+    (if (< x current-line-length)
       [(inc x) y]
-      (let [next (next-line editor)]
-        (if next
+      (let [next-line (get-next-line editor)]
+        (if next-line
           [0 (inc y)]
           [x y])))))
 
 (defn position-up-of-cursor [editor]
   (let [[x y] (:cursor editor)
-        previous (previous-line editor)]
-    (if-not previous
+        previous-line (get-previous-line editor)]
+    (if-not previous-line
       [x y]
-      (let [previous-length (count previous)]
-        [(min previous-length x) (dec y)]))))
+      (let [previous-line-length (count previous-line)]
+        [(min previous-line-length x) (dec y)]))))
 
 (defn position-down-of-cursor [editor]
   (let [[x y] (:cursor editor)
-        next (next-line editor)]
-    (if-not next
+        next-line (get-next-line editor)]
+    (if-not next-line
       [x y]
-      (let [next-length (count next)]
-        [(min next-length x) (inc y)]))))
+      (let [next-line-length (count next-line)]
+        [(min next-line-length x) (inc y)]))))
