@@ -3,8 +3,12 @@
 (def state (atom {:buffer []
                   :cursor [0 0]
                   :size [80 24]
+                  :offset [0 0]
                   :key-bindings {}
                   :running true}))
+
+(defn get-value [query]
+  (query @state))
 
 (defn execute-action [action]
   (swap! state action))

@@ -1,6 +1,7 @@
 (ns davinci.core
   (:require [davinci.actions :refer :all]
             [davinci.editor :as e]
+            [davinci.queries :as queries]
             [davinci.terminal :as t])
   (:gen-class))
 
@@ -30,7 +31,7 @@
   [term]
   (let [[w h] (t/get-size term)]
     (t/clear term)
-    (doseq [line (take (dec h) (e/get-buffer))]
+    (doseq [line (e/get-value queries/get-visible-lines)]
       (t/put-string term (str line \newline)))
     (let [[x y] (e/get-cursor)]
       (t/move-cursor term x y))))

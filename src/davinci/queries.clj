@@ -11,6 +11,10 @@
 
 (def get-next-line (get-line-relative-to-cursor 1))
 
+(defn get-visible-lines [editor]
+  (let [[_ h] (:size editor) [_ oy] (:offset editor)]
+    (subvec (:buffer editor) oy (+ oy h))))
+
 (defn position-left-of-cursor [editor]
   (let [[x y] (:cursor editor)]
     (if (pos? x)
