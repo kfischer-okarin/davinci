@@ -23,6 +23,9 @@
 (e/bind-key :backspace delete-previous-character)
 (e/bind-key :enter insert-newline)
 
+(defn set-editor-size [[terminal-w terminal-h]]
+  (e/execute-action (set-size [terminal-w (dec terminal-h)])))
+
 (defn render-in-terminal
   [term]
   (let [[w h] (t/get-size term)]
@@ -39,6 +42,7 @@
    (e/execute-action (open-file filename))
    (let [term (t/get-terminal)]
      (t/in-terminal term
+                    (set-editor-size (t/get-size term))
                     (while (e/is-running)
                       (render-in-terminal term)
                       (handle-key (t/get-key term)))))))

@@ -56,3 +56,6 @@
       (-> editor
           (update-in [:buffer y] #(str (subs % 0 x) character (subs % x)))
           (move-cursor-right)))))
+
+(defn set-size [size]
+  #(assoc % :size size))

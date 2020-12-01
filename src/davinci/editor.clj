@@ -2,6 +2,7 @@
 
 (def state (atom {:buffer []
                   :cursor [0 0]
+                  :size [80 24]
                   :key-bindings {}
                   :running true}))
 
