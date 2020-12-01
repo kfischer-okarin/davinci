@@ -35,10 +35,19 @@
     (update editor :buffer #(into [] cat [(take start %) new-lines (drop end %)]))))
 
 (defn delete-previous-character [editor]
-  (let [[x y] (:cursor editor) prev-x (dec x)]
-    (-> editor
-        (update-in [:buffer y] #(str (subs % 0 prev-x) (subs % x)))
-        move-cursor-left)))
+  (let [[x y] (:cursor editor)]
+    (if (pos? x)
+      (-> editor
+          (update-in [:buffer y] #(str (subs % 0 (dec x)) (subs % x)))
+          move-cursor-left)
+      (if (pos? y)
+        (let [previous (previous-line editor)
+              merged-with-previous-line (str previous (current-line editor))
+              merge-lines (replace-lines [(dec y) (inc y)] [merged-with-previous-line])]
+          (-> editor
+              merge-lines
+              (assoc :cursor [(count previous) (dec y)])))
+        editor))))
 
 (defn insert-newline [editor]
   (let [[x y] (:cursor editor)

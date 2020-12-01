@@ -12,6 +12,16 @@
         expected-next-editor {:buffer ["This is soe text" "Second line is nice"] :cursor [10 0]}]
     (is (= (delete-previous-character editor) expected-next-editor))))
 
+(deftest test-delete-previous-character-and-merge-line
+  (let [editor {:buffer ["Abc" "def"] :cursor [0 1]}
+        expected-next-editor {:buffer ["Abcdef"] :cursor [3 0]}]
+    (is (= (delete-previous-character editor) expected-next-editor))))
+
+(deftest test-delete-previous-character-not-beyond-document
+  (let [editor {:buffer ["Abc" "def"] :cursor [0 0]}
+        expected-next-editor {:buffer ["Abc" "def"] :cursor [0 0]}]
+    (is (= (delete-previous-character editor) expected-next-editor))))
+
 (deftest test-move-cursor-up
   (let [buffer ["Abc" "Def"]
         editor {:buffer buffer :cursor [2 1]}
