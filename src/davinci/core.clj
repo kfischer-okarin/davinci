@@ -32,7 +32,7 @@
   (t/clear term)
   (doseq [line (e/get-value queries/get-visible-lines)]
     (t/put-string term (str line \newline)))
-  (let [[x y] (e/get-cursor)]
+  (let [[x y] (e/get-value :cursor)]
     (t/move-cursor term x y)))
 
 (defn -main
@@ -43,6 +43,6 @@
    (let [term (t/get-terminal)]
      (t/in-terminal term
                     (set-editor-size (t/get-size term))
-                    (while (e/is-running)
+                    (while (e/get-value :running)
                       (render-in-terminal term)
                       (handle-key (t/get-key term)))))))
