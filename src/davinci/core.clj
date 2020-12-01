@@ -15,7 +15,7 @@
                   do-nothing))]
     (e/execute-action action)))
 
-(e/bind-key {:key \q :modifiers #{:ctrl}} quit-editor)
+(e/bind-key {:key \w :modifiers #{:ctrl}} quit-editor)
 (e/bind-key :up move-cursor-up)
 (e/bind-key :right move-cursor-right)
 (e/bind-key :left move-cursor-left)
