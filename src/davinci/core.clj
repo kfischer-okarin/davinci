@@ -5,10 +5,13 @@
             [davinci.terminal :as t])
   (:gen-class))
 
+(def last-key (atom nil))
+
 (defn- character-without-modifier [key]
   (and (char? (:key key)) (empty? (:modifiers key))))
 
 (defn handle-key [key]
+  (reset! last-key key)
   (let [action (or
                 (e/get-action-for-key key)
                 (if (character-without-modifier key)
@@ -32,7 +35,11 @@
   (t/clear term)
   (doseq [line (e/get-value queries/get-visible-lines)]
     (t/put-string term (str line \newline)))
-  (let [[x y] (e/get-value :cursor) [ox oy] (e/get-value :offset)]
+  (let [[x y] (e/get-value :cursor)
+        [w h] (e/get-value :size)
+        [ox oy] (e/get-value :offset)]
+    (t/move-cursor term 0 h)
+    (t/put-string term (str "Last key: " @last-key))
     (t/move-cursor term (- x ox) (- y oy))))
 
 (defn -main
