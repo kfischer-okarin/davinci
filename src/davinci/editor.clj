@@ -1,11 +1,13 @@
 (ns davinci.editor)
 
-(def state (atom {:buffer []
-                  :cursor [0 0]
-                  :size [80 24]
-                  :offset [0 0]
-                  :key-bindings {}
-                  :running true}))
+(def initial-state {:buffer []
+                    :cursor [0 0]
+                    :size [80 24]
+                    :offset [0 0]
+                    :key-bindings {}
+                    :running true})
+
+(def state (atom initial-state))
 
 (defn get-value [query]
   (query @state))

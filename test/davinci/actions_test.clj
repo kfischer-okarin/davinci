@@ -1,105 +1,91 @@
 (ns davinci.actions-test
   (:require [clojure.test :refer :all]
-            [davinci.actions :refer :all]))
+            [davinci.actions :refer :all]
+            [davinci.editor :as editor]))
+
+(defn editor-with [values] (merge editor/initial-state values))
 
 (deftest test-replace-lines
-  (let [editor {:buffer ["Line 0" "Line 1" "Line 2" "Line 3"]}
-        expected-next-editor {:buffer ["Line 0" "New Line 0" "New Line 1" "New Line 2" "Line 3"]}]
+  (let [editor (editor-with {:buffer ["Line 0" "Line 1" "Line 2" "Line 3"]})
+        expected-next-editor (merge editor {:buffer ["Line 0" "New Line 0" "New Line 1" "New Line 2" "Line 3"]})]
     (is (= ((replace-lines [1 3] ["New Line 0" "New Line 1" "New Line 2"]) editor) expected-next-editor))))
 
 (deftest test-delete-previous-character
-  (let [editor {:buffer ["This is some text" "Second line is nice"] :cursor [11 0]}
-        expected-next-editor {:buffer ["This is soe text" "Second line is nice"] :cursor [10 0]}]
+  (let [editor (editor-with {:buffer ["This is some text" "Second line is nice"] :cursor [11 0]})
+        expected-next-editor (merge editor {:buffer ["This is soe text" "Second line is nice"] :cursor [10 0]})]
     (is (= (delete-previous-character editor) expected-next-editor))))
 
 (deftest test-delete-previous-character-and-merge-line
-  (let [editor {:buffer ["Abc" "def"] :cursor [0 1]}
-        expected-next-editor {:buffer ["Abcdef"] :cursor [3 0]}]
+  (let [editor (editor-with {:buffer ["Abc" "def"] :cursor [0 1]})
+        expected-next-editor (merge editor {:buffer ["Abcdef"] :cursor [3 0]})]
     (is (= (delete-previous-character editor) expected-next-editor))))
 
 (deftest test-delete-previous-character-not-beyond-document
-  (let [editor {:buffer ["Abc" "def"] :cursor [0 0]}
-        expected-next-editor {:buffer ["Abc" "def"] :cursor [0 0]}]
-    (is (= (delete-previous-character editor) expected-next-editor))))
+  (let [editor (editor-with {:buffer ["Abc" "def"] :cursor [0 0]})]
+    (is (= (delete-previous-character editor) editor))))
 
 (deftest test-move-cursor-up
-  (let [buffer ["Abc" "Def"]
-        editor {:buffer buffer :cursor [2 1]}
-        expected-next-editor {:buffer buffer :cursor [2 0]}]
+  (let [editor (editor-with {:buffer ["Abc" "Def"] :cursor [2 1]})
+        expected-next-editor (merge editor {:cursor [2 0]})]
     (is (= (move-cursor-up editor) expected-next-editor))))
 
 (deftest test-move-cursor-up-not-beyond-document
-  (let [buffer ["This is some text" "Second line is nice"]
-        editor {:buffer buffer :cursor [5 0]}
-        expected-next-editor {:buffer buffer :cursor [5 0]}]
-    (is (= (move-cursor-up editor) expected-next-editor))))
+  (let [editor (editor-with {:buffer ["This is some text" "Second line is nice"] :cursor [5 0]})]
+    (is (= (move-cursor-up editor) editor))))
 
 (deftest test-move-cursor-up-not-beyond-line
-  (let [buffer ["Abc" "Loooooong line"]
-        editor {:buffer buffer :cursor [10 1]}
-        expected-next-editor {:buffer buffer :cursor [3 0]}]
+  (let [editor (editor-with {:buffer ["Abc" "Loooooong line"] :cursor [10 1]})
+        expected-next-editor (merge editor {:cursor [3 0]})]
     (is (= (move-cursor-up editor) expected-next-editor))))
 
 (deftest test-move-cursor-down
-  (let [buffer ["Abc" "Def"]
-        editor {:buffer buffer :cursor [2 0]}
-        expected-next-editor {:buffer buffer :cursor [2 1]}]
+  (let [editor (editor-with {:buffer ["Abc" "Def"] :cursor [2 0]})
+        expected-next-editor (merge editor {:cursor [2 1]})]
     (is (= (move-cursor-down editor) expected-next-editor))))
 
 (deftest test-move-cursor-down-not-beyond-document
-  (let [buffer ["This is some text" "Second line is nice"]
-        editor {:buffer buffer :cursor [5 1]}
-        expected-next-editor {:buffer buffer :cursor [5 1]}]
-    (is (= (move-cursor-down editor) expected-next-editor))))
+  (let [editor (editor-with {:buffer ["This is some text" "Second line is nice"] :cursor [5 1]})]
+    (is (= (move-cursor-down editor) editor))))
 
 (deftest test-move-cursor-down-not-beyond-line
-  (let [buffer ["This is some text" "Short"]
-        editor {:buffer buffer :cursor [10 0]}
-        expected-next-editor {:buffer buffer :cursor [5 1]}]
+  (let [editor (editor-with {:buffer ["This is some text" "Short"] :cursor [10 0]})
+        expected-next-editor (merge editor {:cursor [5 1]})]
     (is (= (move-cursor-down editor) expected-next-editor))))
 
 (deftest test-move-cursor-right
-  (let [buffer ["Abc"]
-        editor {:buffer buffer :cursor [1 0]}
-        expected-next-editor {:buffer buffer :cursor [2 0]}]
+  (let [editor (editor-with {:buffer ["Abc"] :cursor [1 0]})
+        expected-next-editor (merge editor {:cursor [2 0]})]
     (is (= (move-cursor-right editor) expected-next-editor))))
 
 (deftest test-move-cursor-right-not-beyond-document
-  (let [buffer ["Abc"]
-        editor {:buffer buffer :cursor [3 0]}
-        expected-next-editor {:buffer buffer :cursor [3 0]}]
-    (is (= (move-cursor-right editor) expected-next-editor))))
+  (let [editor (editor-with {:buffer  ["Abc"] :cursor [3 0]})]
+    (is (= (move-cursor-right editor) editor))))
 
 (deftest test-move-cursor-right-to-next-line
-  (let [buffer ["Abc" "Def"]
-        editor {:buffer buffer :cursor [3 0]}
-        expected-next-editor {:buffer buffer :cursor [0 1]}]
+  (let [editor (editor-with {:buffer ["Abc" "Def"] :cursor [3 0]})
+        expected-next-editor (merge editor {:cursor [0 1]})]
     (is (= (move-cursor-right editor) expected-next-editor))))
 
 (deftest test-move-cursor-left
-  (let [buffer ["Abc"]
-        editor {:buffer buffer :cursor [2 0]}
-        expected-next-editor {:buffer buffer :cursor [1 0]}]
+  (let [editor (editor-with {:buffer ["Abc"] :cursor [2 0]})
+        expected-next-editor (merge editor {:cursor [1 0]})]
     (is (= (move-cursor-left editor) expected-next-editor))))
 
 (deftest test-move-cursor-left-not-beyond-document
-  (let [buffer ["Abc"]
-        editor {:buffer buffer :cursor [0 0]}
-        expected-next-editor {:buffer buffer :cursor [0 0]}]
-    (is (= (move-cursor-left editor) expected-next-editor))))
+  (let [editor (editor-with {:buffer ["Abc"] :cursor [0 0]})]
+    (is (= (move-cursor-left editor) editor))))
 
 (deftest test-move-cursor-left-to-previous-line
-  (let [buffer ["Abc" "Def"]
-        editor {:buffer buffer :cursor [0 1]}
-        expected-next-editor {:buffer buffer :cursor [3 0]}]
+  (let [editor (editor-with {:buffer  ["Abc" "Def"] :cursor [0 1]})
+        expected-next-editor (merge editor {:cursor [3 0]})]
     (is (= (move-cursor-left editor) expected-next-editor))))
 
 (deftest test-insert-character
-  (let [editor {:buffer ["This is some text" "Second line is nice"] :cursor [4 1]}
-        expected-next-editor {:buffer ["This is some text" "Secotnd line is nice"] :cursor [5 1]}]
+  (let [editor (editor-with {:buffer ["Abc" "Def"] :cursor [1 1]})
+        expected-next-editor (merge editor {:buffer ["Abc" "Dtef"] :cursor [2 1]})]
     (is (= ((insert-character \t) editor) expected-next-editor))))
 
 (deftest test-insert-newline
-  (let [editor {:buffer ["This is some text" "Second line is nice"] :cursor [4 1]}
-        expected-next-editor {:buffer ["This is some text" "Seco" "nd line is nice"] :cursor [0 2]}]
+  (let [editor (editor-with {:buffer ["Abc" "Def"] :cursor [2 1]})
+        expected-next-editor (merge editor {:buffer ["Abc" "De" "f"] :cursor [0 2]})]
     (is (= (insert-newline editor) expected-next-editor))))
