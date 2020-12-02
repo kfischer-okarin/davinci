@@ -32,8 +32,8 @@
   (t/clear term)
   (doseq [line (e/get-value queries/get-visible-lines)]
     (t/put-string term (str line \newline)))
-  (let [[x y] (e/get-value :cursor)]
-    (t/move-cursor term x y)))
+  (let [[x y] (e/get-value :cursor) [ox oy] (e/get-value :offset)]
+    (t/move-cursor term (- x ox) (- y oy))))
 
 (defn -main
   "I don't do a whole lot ... yet."

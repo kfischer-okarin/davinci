@@ -29,6 +29,11 @@
         expected-next-editor (merge editor {:cursor [2 0]})]
     (is (= (move-cursor-up editor) expected-next-editor))))
 
+(deftest test-move-cursor-up-scrolls-editor
+  (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3"] :cursor [0 1] :size [80 2] :offset [0 1]})
+        expected-next-editor (merge editor {:cursor [0 0] :offset [0 0]})]
+    (is (= (move-cursor-up editor) expected-next-editor))))
+
 (deftest test-move-cursor-up-not-beyond-document
   (let [editor (editor-with {:buffer ["This is some text" "Second line is nice"] :cursor [5 0]})]
     (is (= (move-cursor-up editor) editor))))
@@ -41,6 +46,11 @@
 (deftest test-move-cursor-down
   (let [editor (editor-with {:buffer ["Abc" "Def"] :cursor [2 0]})
         expected-next-editor (merge editor {:cursor [2 1]})]
+    (is (= (move-cursor-down editor) expected-next-editor))))
+
+(deftest test-move-cursor-down-scrolls-editor
+  (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3"] :cursor [0 1] :size [80 2] :offset [0 0]})
+        expected-next-editor (merge editor {:cursor [0 2] :offset [0 1]})]
     (is (= (move-cursor-down editor) expected-next-editor))))
 
 (deftest test-move-cursor-down-not-beyond-document

@@ -4,6 +4,13 @@
 (defn quit-editor [editor]
   (assoc editor :running false))
 
+(defn- scroll-to-cursor [editor]
+  (let [[x y] (:cursor editor) [w h] (:size editor) [ox oy] (:offset editor)]
+    (cond
+      (>= y (+ h oy)) (assoc-in editor [:offset 1] (- y (dec h)))
+      (< y oy) (assoc-in editor [:offset 1] y)
+      :else editor)))
+
 (defn move-cursor-left [editor]
   (assoc editor :cursor (position-left-of-cursor editor)))
 
@@ -11,10 +18,14 @@
   (assoc editor :cursor (position-right-of-cursor editor)))
 
 (defn move-cursor-up [editor]
-  (assoc editor :cursor (position-up-of-cursor editor)))
+  (-> editor
+      (assoc :cursor (position-up-of-cursor editor))
+      (scroll-to-cursor)))
 
 (defn move-cursor-down [editor]
-  (assoc editor :cursor (position-down-of-cursor editor)))
+  (-> editor
+      (assoc :cursor (position-down-of-cursor editor))
+      (scroll-to-cursor)))
 
 (defn replace-lines [[start end] new-lines]
   (fn [editor]
