@@ -86,3 +86,9 @@
     (-> editor
         (assoc-in [:cursor 1] (max (- y h) 0))
         (assoc-in [:offset 1] (max (- oy h) 0)))))
+
+(defn move-cursor-to-beginning-of-line [editor]
+  (assoc-in editor [:cursor 0] 0))
+
+(defn move-cursor-to-end-of-line [editor]
+  (assoc-in editor [:cursor 0] (count (get-current-line editor))))

@@ -26,6 +26,8 @@
 (e/bind-key :down move-cursor-down)
 (e/bind-key :page-up page-up)
 (e/bind-key :page-down page-down)
+(e/bind-key :home move-cursor-to-beginning-of-line)
+(e/bind-key :end move-cursor-to-end-of-line)
 (e/bind-key :backspace delete-previous-character)
 (e/bind-key :enter insert-newline)
 

@@ -119,3 +119,13 @@
   (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3" "Line 4"] :cursor [0 2] :size [80 2] :offset [0 1]})
         expected-next-editor (merge editor {:cursor [0 0] :offset [0 0]})]
     (is (= (page-up editor) expected-next-editor))))
+
+(deftest test-move-cursor-to-beginning-of-line
+  (let [editor (editor-with {:buffer ["Abc"] :cursor [2 0]})
+        expected-next-editor (merge editor {:cursor [0 0]})]
+    (is (= (move-cursor-to-beginning-of-line editor) expected-next-editor))))
+
+(deftest test-move-cursor-to-end-of-line
+  (let [editor (editor-with {:buffer ["Abc"] :cursor [1 0]})
+        expected-next-editor (merge editor {:cursor [3 0]})]
+    (is (= (move-cursor-to-end-of-line editor) expected-next-editor))))
