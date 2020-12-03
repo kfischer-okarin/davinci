@@ -1,6 +1,7 @@
 (ns davinci.terminal
   (:import
    com.googlecode.lanterna.terminal.DefaultTerminalFactory
+   com.googlecode.lanterna.terminal.TerminalResizeListener
    com.googlecode.lanterna.input.KeyType))
 
 (defn get-terminal
@@ -9,6 +10,14 @@
   (let [factory (DefaultTerminalFactory.)]
     (.setForceTextTerminal factory true)
     (.createTerminal factory)))
+
+(defn add-resize-listener [terminal f]
+  "Sets the passed function as resize listener for the terminal.
+   The passed function receives the new [w h] as vector."
+  (let [listener (proxy [TerminalResizeListener] []
+                   (onResized [_ new-size]
+                     (f [(.getColumns new-size) (.getRows new-size)])))]
+    (.addResizeListener terminal listener)))
 
 (defn start
   "Start using terminal"

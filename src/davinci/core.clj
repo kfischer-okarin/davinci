@@ -46,14 +46,22 @@
     (t/put-string term (str "Last key: " @last-key))
     (t/move-cursor term (- x ox) (- y oy))))
 
+(defn init-terminal []
+  (let [terminal (t/get-terminal)]
+    (set-editor-size (t/get-size terminal))
+    (t/add-resize-listener terminal
+                           #(do
+                              (set-editor-size %)
+                              (render-in-terminal terminal)))
+    terminal))
+
 (defn -main
   "I don't do a whole lot ... yet."
   ([] (println "No args"))
   ([filename]
    (e/execute-action (open-file filename))
-   (let [term (t/get-terminal)]
+   (let [term (init-terminal)]
      (t/in-terminal term
-                    (set-editor-size (t/get-size term))
                     (while (e/get-value :running)
                       (render-in-terminal term)
                       (handle-key (t/get-key term)))))))
