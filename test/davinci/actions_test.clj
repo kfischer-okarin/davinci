@@ -115,7 +115,7 @@
         expected-next-editor (merge editor {:cursor [0 1] :offset [0 0]})]
     (is (= (page-up editor) expected-next-editor))))
 
-(deftest test-page-down-not-beyond-document
+(deftest test-page-up-not-beyond-document
   (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3" "Line 4"] :cursor [0 2] :size [80 2] :offset [0 1]})
         expected-next-editor (merge editor {:cursor [0 0] :offset [0 0]})]
     (is (= (page-up editor) expected-next-editor))))
