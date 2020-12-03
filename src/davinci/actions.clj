@@ -70,3 +70,19 @@
 
 (defn set-size [size]
   #(assoc % :size size))
+
+(defn page-down [editor]
+  (let [[_ y] (:cursor editor)
+        [_ h] (:size editor)
+        [_ oy] (:offset editor)]
+    (-> editor
+        (assoc-in [:cursor 1] (min (+ y h) (get-max-y editor)))
+        (assoc-in [:offset 1] (min (+ oy h) (get-max-y-offset editor))))))
+
+(defn page-up [editor]
+  (let [[_ y] (:cursor editor)
+        [_ h] (:size editor)
+        [_ oy] (:offset editor)]
+    (-> editor
+        (assoc-in [:cursor 1] (max (- y h) 0))
+        (assoc-in [:offset 1] (max (- oy h) 0)))))

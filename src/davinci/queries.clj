@@ -5,11 +5,24 @@
     (let [[_ y] (:cursor editor)]
       (get-in editor [:buffer (+ y dy)]))))
 
-(def get-previous-line (get-line-relative-to-cursor -1))
+(def get-previous-line
+  (get-line-relative-to-cursor -1))
 
-(def get-current-line (get-line-relative-to-cursor 0))
+(def get-current-line
+  (get-line-relative-to-cursor 0))
 
-(def get-next-line (get-line-relative-to-cursor 1))
+(def get-next-line
+  (get-line-relative-to-cursor 1))
+
+(defn get-line-count [editor]
+  (count (:buffer editor)))
+
+(defn get-max-y [editor]
+  (- (get-line-count editor) 1))
+
+(defn get-max-y-offset [editor]
+  (let [[w h] (:size editor)]
+    (- (get-line-count editor) h)))
 
 (defn get-visible-lines [editor]
   (let [[_ h] (:size editor) [_ oy] (:offset editor)]

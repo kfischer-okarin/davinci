@@ -99,3 +99,23 @@
   (let [editor (editor-with {:buffer ["Abc" "Def"] :cursor [2 1]})
         expected-next-editor (merge editor {:buffer ["Abc" "De" "f"] :cursor [0 2]})]
     (is (= (insert-newline editor) expected-next-editor))))
+
+(deftest test-page-down
+  (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3" "Line 4"] :cursor [0 0] :size [80 2] :offset [0 0]})
+        expected-next-editor (merge editor {:cursor [0 2] :offset [0 2]})]
+    (is (= (page-down editor) expected-next-editor))))
+
+(deftest test-page-down-not-beyond-document
+  (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3" "Line 4"] :cursor [0 2] :size [80 2] :offset [0 1]})
+        expected-next-editor (merge editor {:cursor [0 3] :offset [0 2]})]
+    (is (= (page-down editor) expected-next-editor))))
+
+(deftest test-page-up
+  (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3" "Line 4"] :cursor [0 3] :size [80 2] :offset [0 2]})
+        expected-next-editor (merge editor {:cursor [0 1] :offset [0 0]})]
+    (is (= (page-up editor) expected-next-editor))))
+
+(deftest test-page-down-not-beyond-document
+  (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3" "Line 4"] :cursor [0 2] :size [80 2] :offset [0 1]})
+        expected-next-editor (merge editor {:cursor [0 0] :offset [0 0]})]
+    (is (= (page-up editor) expected-next-editor))))
