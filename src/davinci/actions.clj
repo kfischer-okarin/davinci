@@ -11,6 +11,11 @@
       (< y oy) (assoc-in editor [:offset 1] y)
       :else editor)))
 
+(defn- clamp-x-to-line-length [editor]
+  (fn [[x y]]
+    (let [line-length (count (get-in editor [:buffer y]))]
+      [(min line-length x) y])))
+
 (defn move-cursor-left [editor]
   (assoc editor :cursor (get-position-left-of-cursor editor)))
 
@@ -83,6 +88,7 @@
         [_ oy] (:offset editor)]
     (-> editor
         (assoc-in [:cursor 1] (min (+ y h) (get-max-y editor)))
+        (update :cursor (clamp-x-to-line-length editor))
         (assoc-in [:offset 1] (min (+ oy h) (get-max-y-offset editor))))))
 
 (defn page-up [editor]
@@ -91,6 +97,7 @@
         [_ oy] (:offset editor)]
     (-> editor
         (assoc-in [:cursor 1] (max (- y h) 0))
+        (update :cursor (clamp-x-to-line-length editor))
         (assoc-in [:offset 1] (max (- oy h) 0)))))
 
 (defn move-cursor-to-beginning-of-line [editor]

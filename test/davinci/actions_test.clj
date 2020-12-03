@@ -110,6 +110,11 @@
         expected-next-editor (merge editor {:cursor [0 3] :offset [0 2]})]
     (is (= (page-down editor) expected-next-editor))))
 
+(deftest test-page-down-not-beyond-line
+  (let [editor (editor-with {:buffer ["Long Line 1" "Line 2" "Line 3" "Line 4"] :cursor [10 0] :size [80 5] :offset [0 0]})
+        expected-next-editor (merge editor {:cursor [6 3]})]
+    (is (= (page-down editor) expected-next-editor))))
+
 (deftest test-page-up
   (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3" "Line 4"] :cursor [0 3] :size [80 2] :offset [0 2]})
         expected-next-editor (merge editor {:cursor [0 1] :offset [0 0]})]
@@ -118,6 +123,11 @@
 (deftest test-page-up-not-beyond-document
   (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3" "Line 4"] :cursor [0 2] :size [80 2] :offset [0 1]})
         expected-next-editor (merge editor {:cursor [0 0] :offset [0 0]})]
+    (is (= (page-up editor) expected-next-editor))))
+
+(deftest test-page-up-not-beyond-line
+  (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3" "Long Line 4"] :cursor [10 3] :size [80 5] :offset [0 0]})
+        expected-next-editor (merge editor {:cursor [6 0]})]
     (is (= (page-up editor) expected-next-editor))))
 
 (deftest test-move-cursor-to-beginning-of-line
