@@ -68,8 +68,14 @@
           (update-in [:buffer y] #(str (subs % 0 x) character (subs % x)))
           (move-cursor-right)))))
 
+(defn- fix-offset [editor]
+  (update-in editor [:offset 1] #(min (get-max-y-offset editor) %)))
+
 (defn set-size [size]
-  #(assoc % :size size))
+  (fn [editor]
+    (-> editor
+        (assoc :size size)
+        (fix-offset))))
 
 (defn page-down [editor]
   (let [[_ y] (:cursor editor)

@@ -129,3 +129,18 @@
   (let [editor (editor-with {:buffer ["Abc"] :cursor [1 0]})
         expected-next-editor (merge editor {:cursor [3 0]})]
     (is (= (move-cursor-to-end-of-line editor) expected-next-editor))))
+
+(deftest test-set-size
+  (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3" "Line 4"] :size [80 2]})
+        expected-next-editor (merge editor {:size [80 4]})]
+    (is (= ((set-size [80 4]) editor) expected-next-editor))))
+
+(deftest test-set-size-beyond-document-end
+  (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3" "Line 4"] :cursor [0 2] :size [80 2] :offset [0 2]})
+        expected-next-editor (merge editor {:size [80 3] :offset [0 1]})]
+    (is (= ((set-size [80 3]) editor) expected-next-editor))))
+
+(deftest test-set-size-bigger-than-document
+  (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3" "Line 4"] :cursor [0 2] :size [80 2] :offset [0 2]})
+        expected-next-editor (merge editor {:size [80 5] :offset [0 0]})]
+    (is (= ((set-size [80 5]) editor) expected-next-editor))))

@@ -22,11 +22,11 @@
 
 (defn get-max-y-offset [editor]
   (let [[w h] (:size editor)]
-    (- (get-line-count editor) h)))
+    (max (- (get-line-count editor) h) 0)))
 
 (defn get-visible-lines [editor]
   (let [[_ h] (:size editor) [_ oy] (:offset editor)]
-    (subvec (:buffer editor) oy (+ oy h))))
+    (subvec (:buffer editor) oy (min (+ oy h) (get-line-count editor)))))
 
 (defn position-left-of-cursor [editor]
   (let [[x y] (:cursor editor)]
