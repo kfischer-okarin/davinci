@@ -5,6 +5,12 @@
 
 (defn editor-with [values] (merge editor/initial-state values))
 
+(deftest test-open-file
+  (with-redefs [slurp (constantly "Line 1\nLine 2\n")]
+    (let [editor (editor-with {:buffer []})
+          expected-next-editor (merge editor {:buffer ["Line 1" "Line 2" ""] :path "abc"})]
+      (is (= ((open-file "abc") editor) expected-next-editor)))))
+
 (deftest test-replace-lines
   (let [editor (editor-with {:buffer ["Line 0" "Line 1" "Line 2" "Line 3"]})
         expected-next-editor (merge editor {:buffer ["Line 0" "New Line 0" "New Line 1" "New Line 2" "Line 3"]})]

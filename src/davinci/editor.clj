@@ -1,6 +1,7 @@
 (ns davinci.editor)
 
 (def initial-state {:buffer []
+                    :path nil
                     :cursor [0 0]
                     :size [80 24]
                     :offset [0 0]

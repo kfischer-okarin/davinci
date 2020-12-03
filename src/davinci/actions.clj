@@ -64,7 +64,10 @@
 (def do-nothing identity)
 
 (defn open-file [filename]
-  #(assoc % :buffer (conj (clojure.string/split (slurp filename) #"\n") "")))
+  (fn [editor]
+    (-> editor
+        (assoc :buffer (conj (clojure.string/split (slurp filename) #"\n") ""))
+        (assoc :path filename))))
 
 (defn insert-character [character]
   (fn [editor]
