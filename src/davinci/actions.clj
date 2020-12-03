@@ -12,19 +12,19 @@
       :else editor)))
 
 (defn move-cursor-left [editor]
-  (assoc editor :cursor (position-left-of-cursor editor)))
+  (assoc editor :cursor (get-position-left-of-cursor editor)))
 
 (defn move-cursor-right [editor]
-  (assoc editor :cursor (position-right-of-cursor editor)))
+  (assoc editor :cursor (get-position-right-of-cursor editor)))
 
 (defn move-cursor-up [editor]
   (-> editor
-      (assoc :cursor (position-up-of-cursor editor))
+      (assoc :cursor (get-position-up-of-cursor editor))
       (scroll-to-cursor)))
 
 (defn move-cursor-down [editor]
   (-> editor
-      (assoc :cursor (position-down-of-cursor editor))
+      (assoc :cursor (get-position-down-of-cursor editor))
       (scroll-to-cursor)))
 
 (defn replace-lines [[start end] new-lines]
