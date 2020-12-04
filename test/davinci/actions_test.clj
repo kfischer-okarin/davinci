@@ -11,6 +11,13 @@
           expected-next-editor (merge editor {:buffer ["Line 1" "Line 2" ""] :path "abc"})]
       (is (= ((open-file "abc") editor) expected-next-editor)))))
 
+(deftest test-save-file
+  (let [output (atom nil)]
+    (with-redefs [spit (fn [filename content] (reset! output [filename content]))]
+      (let [editor (editor-with {:buffer ["Line 1" "Line 2" ""] :path "test.txt"})]
+        (save-file editor)
+        (is (= @output ["test.txt" "Line 1\nLine 2\n"]))))))
+
 (deftest test-replace-lines
   (let [editor (editor-with {:buffer ["Line 0" "Line 1" "Line 2" "Line 3"]})
         expected-next-editor (merge editor {:buffer ["Line 0" "New Line 0" "New Line 1" "New Line 2" "Line 3"]})]

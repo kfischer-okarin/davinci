@@ -63,3 +63,6 @@
       [x y]
       (let [next-line-length (count next-line)]
         [(min next-line-length x) (inc y)]))))
+
+(defn get-buffer-as-string [editor]
+  (apply str (interpose "\n" (:buffer editor))))

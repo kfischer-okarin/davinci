@@ -69,6 +69,9 @@
         (assoc :buffer (conj (clojure.string/split (slurp filename) #"\n") ""))
         (assoc :path filename))))
 
+(defn save-file [editor]
+  (spit (:path editor) (get-buffer-as-string editor)))
+
 (defn insert-character [character]
   (fn [editor]
     (let [[x y] (:cursor editor)]
