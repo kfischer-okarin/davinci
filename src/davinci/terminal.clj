@@ -2,7 +2,8 @@
   (:import
    com.googlecode.lanterna.terminal.DefaultTerminalFactory
    com.googlecode.lanterna.terminal.TerminalResizeListener
-   com.googlecode.lanterna.input.KeyType))
+   com.googlecode.lanterna.input.KeyType
+   com.googlecode.lanterna.TextColor$Indexed))
 
 (defn get-terminal
   "Creates a text terminal."
@@ -48,10 +49,35 @@
   [terminal character]
   (.putCharacter terminal character))
 
+(defn flush [terminal]
+  (.flush terminal))
+
+(defn- parse-color [color-name]
+  (case color-name
+    :red (TextColor$Indexed. 1)
+    :default (TextColor$Indexed. 8)
+    :white (TextColor$Indexed. 15)))
+
+(defn set-foreground-color [terminal color-name]
+  (.setForegroundColor terminal (parse-color color-name)))
+
+(defn set-background-color [terminal color-name]
+  (.setBackgroundColor terminal (parse-color color-name)))
+
+(defn reset-color-and-style [terminal]
+  (.resetColorAndSGR terminal))
+
 (defn put-string
   "Puts string at the current terminal position"
-  [terminal string]
-  (doseq [character string] (put-character terminal character)))
+  ([terminal string]
+   (doseq [character string] (put-character terminal character)))
+  ([terminal string fg-color]
+   (set-foreground-color terminal fg-color)
+   (put-string terminal string)
+   (reset-color-and-style terminal))
+  ([terminal string fg-color bg-color]
+   (set-background-color terminal bg-color)
+   (put-string terminal string fg-color)))
 
 (defn get-key-raw
   "Gets the raw Key object from the terminal (blocking)"
