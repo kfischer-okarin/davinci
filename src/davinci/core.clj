@@ -34,17 +34,22 @@
 (defn set-editor-size [[terminal-w terminal-h]]
   (e/execute-action (set-size [terminal-w (dec terminal-h)])))
 
+(defn render-status-bar [terminal]
+  (let [[w h] (e/get-value :size) left-w (quot w 2) right-w (- w left-w)]
+    (t/move-cursor terminal 0 h)
+    (t/put-string terminal (format (str "%-" left-w "s") (e/get-value :path))  :white :red)
+    (t/put-string terminal (format (str "%" right-w "s") (str "Last key: " @last-key))  :white :red)))
+
 (defn render-in-terminal
   [term]
   (t/clear term)
   (doseq [line (e/get-value queries/get-visible-lines)]
     (t/put-string term (str line \newline)))
   (let [[x y] (e/get-value :cursor)
-        [w h] (e/get-value :size)
         [ox oy] (e/get-value :offset)]
-    (t/move-cursor term 0 h)
-    (t/put-string term (str "Last key: " @last-key))
-    (t/move-cursor term (- x ox) (- y oy))))
+    (render-status-bar term)
+    (t/move-cursor term (- x ox) (- y oy)))
+  (t/flush term))
 
 (defn init-terminal []
   (let [terminal (t/get-terminal)]
