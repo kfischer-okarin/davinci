@@ -46,6 +46,7 @@
  (add-key-binding :end move-cursor-to-end-of-line)
  (add-key-binding :backspace delete-previous-character)
  (add-key-binding :enter insert-newline)
+ (add-key-binding :tab (insert-string "  "))
  (add-key-binding \x :ctrl (set-key-modifier :command-mode))
  (add-key-binding \x :command-mode (unset-key-modifier :command-mode))
  (add-key-binding \s :command-mode format-and-save)
