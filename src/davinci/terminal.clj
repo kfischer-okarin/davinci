@@ -49,7 +49,7 @@
   [terminal character]
   (.putCharacter terminal character))
 
-(defn flush [terminal]
+(defn flush-terminal [terminal]
   (.flush terminal))
 
 (defn- parse-color [color-name]

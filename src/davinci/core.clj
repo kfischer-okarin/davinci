@@ -60,7 +60,7 @@
         [ox oy] (e/get-value :offset)]
     (render-status-bar term)
     (t/move-cursor term (- x ox) (- y oy)))
-  (t/flush term))
+  (t/flush-terminal term))
 
 (defn init-terminal []
   (let [terminal (t/get-terminal)]
