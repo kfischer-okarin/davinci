@@ -6,6 +6,7 @@
                     :size [80 24]
                     :offset [0 0]
                     :key-bindings {}
+                    :key-modifiers #{}
                     :running true})
 
 (def state (atom initial-state))

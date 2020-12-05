@@ -167,3 +167,13 @@
   (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3" "Line 4"] :cursor [0 2] :size [80 2] :offset [0 2]})
         expected-next-editor (merge editor {:size [80 5] :offset [0 0]})]
     (is (= ((set-size [80 5]) editor) expected-next-editor))))
+
+(deftest test-set-key-modifier
+  (let [editor (editor-with {:key-modifiers #{}})
+        expected-next-editor (merge editor {:key-modifiers #{:mode-x}})]
+    (is (= ((set-key-modifier :mode-x) editor) expected-next-editor))))
+
+(deftest test-unset-key-modifier
+  (let [editor (editor-with {:key-modifiers #{:mode-x :mode-y}})
+        expected-next-editor (merge editor {:key-modifiers #{:mode-x}})]
+    (is (= ((unset-key-modifier :mode-y) editor) expected-next-editor))))

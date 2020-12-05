@@ -111,3 +111,11 @@
 
 (defn move-cursor-to-end-of-line [editor]
   (assoc-in editor [:cursor 0] (count (get-current-line editor))))
+
+(defn set-key-modifier [modifier]
+  (fn [editor]
+    (update editor :key-modifiers #(conj % modifier))))
+
+(defn unset-key-modifier [modifier]
+  (fn [editor]
+    (update editor :key-modifiers #(disj % modifier))))
