@@ -65,11 +65,11 @@
     (t/put-string terminal (format (str "%" right-w "s") right-content) :white :red)))
 
 (defn render-status-bar [terminal]
-  (let [[_ h] (e/get-value :size)]
+  (let [[_ h] (e/get-value :size) [x y] (e/get-value :cursor) position (str (e/get-value :path) ":" (inc y) ":" (inc x))]
     (t/move-cursor terminal 0 h)
     (if (contains? (e/get-value :key-modifiers) :command-mode)
-      (render-two-part-status-bar terminal (e/get-value :path) "COMMAND MODE")
-      (render-two-part-status-bar terminal (e/get-value :path) (str "Last key: " @last-key)))))
+      (render-two-part-status-bar terminal position "COMMAND MODE")
+      (render-two-part-status-bar terminal position (str "Last key: " @last-key)))))
 
 (defn render-in-terminal
   [term]
