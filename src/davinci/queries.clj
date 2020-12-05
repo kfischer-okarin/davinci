@@ -1,4 +1,5 @@
-(ns davinci.queries)
+(ns davinci.queries
+  (:require [clojure.string :as string]))
 
 (defn get-line-relative-to-cursor [dy]
   (fn [editor]
@@ -18,7 +19,7 @@
   (count (:buffer editor)))
 
 (defn get-max-y [editor]
-  (- (get-line-count editor) 1))
+  (dec (get-line-count editor)))
 
 (defn get-max-y-offset [editor]
   (let [[w h] (:size editor)]
@@ -65,4 +66,4 @@
         [(min next-line-length x) (inc y)]))))
 
 (defn get-buffer-as-string [editor]
-  (apply str (interpose "\n" (:buffer editor))))
+  (string/join "\n" (:buffer editor)))
