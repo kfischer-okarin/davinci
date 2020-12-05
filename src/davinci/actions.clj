@@ -70,7 +70,8 @@
         (assoc :path filename))))
 
 (defn save-file [editor]
-  (spit (:path editor) (get-buffer-as-string editor)))
+  (spit (:path editor) (get-buffer-as-string editor))
+  editor)
 
 (defn insert-character [character]
   (fn [editor]

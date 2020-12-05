@@ -15,7 +15,7 @@
   (let [output (atom nil)]
     (with-redefs [spit (fn [filename content] (reset! output [filename content]))]
       (let [editor (editor-with {:buffer ["Line 1" "Line 2" ""] :path "test.txt"})]
-        (save-file editor)
+        (is (= (save-file editor) editor))
         (is (= @output ["test.txt" "Line 1\nLine 2\n"]))))))
 
 (deftest test-replace-lines
