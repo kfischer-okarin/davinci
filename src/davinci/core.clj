@@ -1,11 +1,15 @@
 (ns davinci.core
-  (:require [davinci.actions :refer :all]
+  (:require [clojure.string :as string]
+            [clojure.java.shell :refer [sh]]
+            [davinci.actions :refer :all]
             [davinci.editor :as e]
             [davinci.queries :as queries]
+            [davinci.system :as s]
             [davinci.terminal :as t])
   (:gen-class))
 
 (def last-key (atom nil))
+(def temp-file (atom nil))
 
 (defn handle-key [key]
   (reset! last-key key)
@@ -14,6 +18,21 @@
                 (e/get-character-handler-action-for-key key)
                 do-nothing)]
     (e/execute-action action)))
+
+(defn format-with-rubocop [editor]
+  (spit @temp-file (queries/get-buffer-as-string editor))
+  (sh "rubocop" "-A" (.getAbsolutePath @temp-file))
+  ((replace-buffer-with (slurp @temp-file)) editor))
+
+(defn format-buffer [editor]
+  (cond
+    (string/ends-with? (e/get-value :path) ".rb") (format-with-rubocop editor)
+    :else editor))
+
+(defn format-and-save [editor]
+  (-> editor
+      (format-buffer)
+      (save-file)))
 
 (e/execute-actions
  (add-key-binding \w :ctrl quit-editor)
@@ -29,7 +48,7 @@
  (add-key-binding :enter insert-newline)
  (add-key-binding \x :ctrl (set-key-modifier :command-mode))
  (add-key-binding \x :command-mode (unset-key-modifier :command-mode))
- (add-key-binding \s :command-mode save-file)
+ (add-key-binding \s :command-mode format-and-save)
  (set-character-handler #(insert-character %)))
 
 ; TODO add execute command action
@@ -75,9 +94,11 @@
   "I don't do a whole lot ... yet."
   ([] (println "No args"))
   ([filename]
+   (reset! temp-file (s/get-tempfile))
    (e/execute-action (open-file filename))
    (let [term (init-terminal)]
      (t/in-terminal term
                     (while (e/get-value :running)
                       (render-in-terminal term)
-                      (handle-key (t/get-key term)))))))
+                      (handle-key (t/get-key term)))))
+   (System/exit 0))) ; Quit immediately (because of possible future threads hanging around)
