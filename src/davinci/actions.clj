@@ -63,10 +63,13 @@
 
 (def do-nothing identity)
 
+(defn replace-buffer-with [string]
+  #(assoc % :buffer (conj (clojure.string/split string #"\n") "")))
+
 (defn open-file [filename]
   (fn [editor]
     (-> editor
-        (assoc :buffer (conj (clojure.string/split (slurp filename) #"\n") ""))
+        ((replace-buffer-with (slurp filename)))
         (assoc :path filename))))
 
 (defn save-file-to [filename]
