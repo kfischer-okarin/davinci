@@ -34,11 +34,15 @@
 (defn set-editor-size [[terminal-w terminal-h]]
   (e/execute-action (set-size [terminal-w (dec terminal-h)])))
 
+(defn render-two-part-status-bar [terminal left-content right-content]
+  (let [[w _] (e/get-value :size) left-w (quot w 2) right-w (- w left-w)]
+    (t/put-string terminal (format (str "%-" left-w "s") left-content) :white :red)
+    (t/put-string terminal (format (str "%" right-w "s") right-content) :white :red)))
+
 (defn render-status-bar [terminal]
-  (let [[w h] (e/get-value :size) left-w (quot w 2) right-w (- w left-w)]
+  (let [[w h] (e/get-value :size)]
     (t/move-cursor terminal 0 h)
-    (t/put-string terminal (format (str "%-" left-w "s") (e/get-value :path))  :white :red)
-    (t/put-string terminal (format (str "%" right-w "s") (str "Last key: " @last-key))  :white :red)))
+    (render-two-part-status-bar terminal (e/get-value :path) (str "Last key: " @last-key))))
 
 (defn render-in-terminal
   [term]
