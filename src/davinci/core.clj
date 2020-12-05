@@ -7,16 +7,12 @@
 
 (def last-key (atom nil))
 
-(defn- character-without-modifier [key]
-  (and (char? (:key key)) (empty? (:modifiers key))))
-
 (defn handle-key [key]
   (reset! last-key key)
   (let [action (or
                 (e/get-action-for-key key)
-                (if (character-without-modifier key)
-                  (insert-character (:key key))
-                  do-nothing))]
+                (e/get-character-handler-action-for-key key)
+                do-nothing)]
     (e/execute-action action)))
 
 (e/execute-actions
@@ -30,7 +26,8 @@
  (add-key-binding :home move-cursor-to-beginning-of-line)
  (add-key-binding :end move-cursor-to-end-of-line)
  (add-key-binding :backspace delete-previous-character)
- (add-key-binding :enter insert-newline))
+ (add-key-binding :enter insert-newline)
+ (set-character-handler #(insert-character %)))
 
 (defn set-editor-size [[terminal-w terminal-h]]
   (e/execute-action (set-size [terminal-w (dec terminal-h)])))

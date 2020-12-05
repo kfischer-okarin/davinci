@@ -7,6 +7,7 @@
                     :offset [0 0]
                     :key-bindings {}
                     :key-modifiers #{}
+                    :character-handlers {} ; active-modifiers -> handler
                     :running true})
 
 (def state (atom initial-state))
@@ -22,3 +23,9 @@
 
 (defn get-action-for-key [key]
   (get-in @state [:key-bindings key]))
+
+(defn get-character-handler-action-for-key [key]
+  (let [key-without-modifiers (:key key)
+        character-handler (get-in @state [:character-handlers (:modifiers key)])]
+    (if (and (char? key-without-modifiers) character-handler)
+      (character-handler key-without-modifiers))))

@@ -207,3 +207,23 @@
   (let [editor (editor-with {:key-bindings {{:key \x :modifiers #{:ctrl :alt}} do-nothing}})
         expected-next-editor (merge editor {:key-bindings {}})]
     (is (= ((remove-key-binding \x :ctrl :alt) editor) expected-next-editor))))
+
+(deftest test-set-character-handler
+  (let [editor (editor-with {:character-handlers {}})
+        expected-next-editor (merge editor {:character-handlers {#{:mode-x} do-nothing}})]
+    (is (= ((set-character-handler :mode-x do-nothing) editor) expected-next-editor))))
+
+(deftest test-set-character-handler-multiple-modifiers
+  (let [editor (editor-with {:character-handlers {}})
+        expected-next-editor (merge editor {:character-handlers {#{:mode-x :ctrl} do-nothing}})]
+    (is (= ((set-character-handler :mode-x :ctrl do-nothing) editor) expected-next-editor))))
+
+(deftest test-unset-character-handler
+  (let [editor (editor-with {:character-handlers {#{:mode-x} do-nothing}})
+        expected-next-editor (merge editor {:character-handlers {}})]
+    (is (= ((unset-character-handler :mode-x) editor) expected-next-editor))))
+
+(deftest test-unset-character-handler-multiple-modifiers
+  (let [editor (editor-with {:character-handlers {#{:mode-x :ctrl} do-nothing}})
+        expected-next-editor (merge editor {:character-handlers {}})]
+    (is (= ((unset-character-handler :mode-x :ctrl) editor) expected-next-editor))))

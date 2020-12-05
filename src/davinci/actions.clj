@@ -129,3 +129,13 @@
 (defn remove-key-binding [key & modifiers]
   (fn [editor]
     (update editor :key-bindings #(dissoc % {:key key :modifiers (set modifiers)}))))
+
+(defn set-character-handler [& modifiers-and-handler]
+  (fn [editor]
+    (let [modifiers (set (butlast modifiers-and-handler))
+          handler (last modifiers-and-handler)]
+      (update editor :character-handlers #(assoc % modifiers handler)))))
+
+(defn unset-character-handler [& modifiers]
+  (fn [editor]
+    (update editor :character-handlers #(dissoc % (set modifiers)))))
