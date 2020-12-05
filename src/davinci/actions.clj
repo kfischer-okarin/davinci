@@ -80,12 +80,15 @@
 (defn save-file [editor]
   ((save-file-to (:path editor)) editor))
 
-(defn insert-character [character]
+(defn insert-string [string]
   (fn [editor]
     (let [[x y] (:cursor editor)]
       (-> editor
-          (update-in [:buffer y] #(str (subs % 0 x) character (subs % x)))
-          (move-cursor-right)))))
+          (update-in [:buffer y] #(str (subs % 0 x) string (subs % x)))
+          (update-in [:cursor 0] #(+ % (count string)))))))
+
+(defn insert-character [character]
+  (insert-string (str character)))
 
 (defn- fix-offset [editor]
   (update-in editor [:offset 1] #(min (get-max-y-offset editor) %)))

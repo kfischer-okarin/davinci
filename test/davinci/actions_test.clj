@@ -115,6 +115,11 @@
         expected-next-editor (merge editor {:buffer ["Abc" "Dtef"] :cursor [2 1]})]
     (is (= ((insert-character \t) editor) expected-next-editor))))
 
+(deftest test-insert-string
+  (let [editor (editor-with {:buffer ["Abc" "Def"] :cursor [1 1]})
+        expected-next-editor (merge editor {:buffer ["Abc" "Dxyzef"] :cursor [4 1]})]
+    (is (= ((insert-string "xyz") editor) expected-next-editor))))
+
 (deftest test-insert-newline
   (let [editor (editor-with {:buffer ["Abc" "Def"] :cursor [2 1]})
         expected-next-editor (merge editor {:buffer ["Abc" "De" "f"] :cursor [0 2]})]
