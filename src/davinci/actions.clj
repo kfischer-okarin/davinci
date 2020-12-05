@@ -11,10 +11,18 @@
       (< y oy) (assoc-in editor [:offset 1] y)
       :else editor)))
 
-(defn- clamp-x-to-line-length [editor]
-  (fn [[x y]]
-    (let [line-length (count (get-in editor [:buffer y]))]
-      [(min line-length x) y])))
+(defn- clamp-cursor [editor]
+  (let [[x y] (:cursor editor)
+        fixed-y (min (get-max-y editor) (max 0 y))
+        line-length (count (get-in editor [:buffer fixed-y]))
+        fixed-x (min line-length x)]
+    (assoc editor :cursor [fixed-x fixed-y])))
+
+(defn- clamp-offset [editor]
+  (update-in editor [:offset 1] #(min (get-max-y editor) %)))
+
+(defn- clamp-offset-strict [editor]
+  (update-in editor [:offset 1] #(min (get-max-y-offset editor) %)))
 
 (defn move-cursor-left [editor]
   (assoc editor :cursor (get-position-left-of-cursor editor)))
@@ -90,22 +98,26 @@
 (defn insert-character [character]
   (insert-string (str character)))
 
-(defn- fix-offset [editor]
-  (update-in editor [:offset 1] #(min (get-max-y-offset editor) %)))
+(defn delete-line [editor]
+  (let [[_ y] (:cursor editor) line-count (get-line-count editor)]
+    (-> editor
+        ((replace-lines [y (inc y)] (if (> line-count 1) [] [""])))
+        (clamp-cursor)
+        (clamp-offset))))
 
 (defn set-size [size]
   (fn [editor]
     (-> editor
         (assoc :size size)
-        (fix-offset))))
+        (clamp-offset-strict))))
 
 (defn page-down [editor]
   (let [[_ y] (:cursor editor)
         [_ h] (:size editor)
         [_ oy] (:offset editor)]
     (-> editor
-        (assoc-in [:cursor 1] (min (+ y h) (get-max-y editor)))
-        (update :cursor (clamp-x-to-line-length editor))
+        (assoc-in [:cursor 1] (+ y h))
+        (clamp-cursor)
         (assoc-in [:offset 1] (min (+ oy h) (get-max-y-offset editor))))))
 
 (defn page-up [editor]
@@ -113,8 +125,8 @@
         [_ h] (:size editor)
         [_ oy] (:offset editor)]
     (-> editor
-        (assoc-in [:cursor 1] (max (- y h) 0))
-        (update :cursor (clamp-x-to-line-length editor))
+        (assoc-in [:cursor 1] (- y h))
+        (clamp-cursor)
         (assoc-in [:offset 1] (max (- oy h) 0)))))
 
 (defn move-cursor-to-beginning-of-line [editor]

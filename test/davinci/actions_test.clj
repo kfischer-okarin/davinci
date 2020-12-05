@@ -165,6 +165,31 @@
         expected-next-editor (merge editor {:cursor [3 0]})]
     (is (= (move-cursor-to-end-of-line editor) expected-next-editor))))
 
+(deftest test-delete-line
+  (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3"] :cursor [1 1]})
+        expected-next-editor (merge editor {:buffer ["Line 1" "Line 3"]})]
+    (is (= (delete-line editor) expected-next-editor))))
+
+(deftest test-delete-line-only-line
+  (let [editor (editor-with {:buffer ["Line 1"] :cursor [0 0]})
+        expected-next-editor (merge editor {:buffer [""]})]
+    (is (= (delete-line editor) expected-next-editor))))
+
+(deftest test-delete-line-and-fix-x-position
+  (let [editor (editor-with {:buffer ["Line 1" "Loooooong Line 2" "Line 3"] :cursor [10 1]})
+        expected-next-editor (merge editor {:buffer ["Line 1" "Line 3"] :cursor [6 1]})]
+    (is (= (delete-line editor) expected-next-editor))))
+
+(deftest test-delete-line-last-line
+  (let [editor (editor-with {:buffer ["Line 1" "Line 2" ""] :cursor [0 2]})
+        expected-next-editor (merge editor {:buffer ["Line 1" "Line 2"] :cursor [0 1]})]
+    (is (= (delete-line editor) expected-next-editor))))
+
+(deftest test-delete-line-last-visible-line
+  (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3"] :cursor [0 2] :offset [0 2]})
+        expected-next-editor (merge editor {:buffer ["Line 1" "Line 2"] :cursor [0 1] :offset [0 1]})]
+    (is (= (delete-line editor) expected-next-editor))))
+
 (deftest test-set-size
   (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3" "Line 4"] :size [80 2]})
         expected-next-editor (merge editor {:size [80 4]})]

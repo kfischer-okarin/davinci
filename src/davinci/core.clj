@@ -50,6 +50,7 @@
  (add-key-binding \x :ctrl (set-key-modifier :command-mode))
  (add-key-binding \x :command-mode (unset-key-modifier :command-mode))
  (add-key-binding \s :command-mode format-and-save)
+ (add-key-binding \k :command-mode delete-line)
  (set-character-handler insert-character))
 
 ; TODO add execute command action
