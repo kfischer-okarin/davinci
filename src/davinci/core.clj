@@ -29,6 +29,7 @@
  (add-key-binding :enter insert-newline)
  (add-key-binding \x :ctrl (set-key-modifier :command-mode))
  (add-key-binding \x :command-mode (unset-key-modifier :command-mode))
+ (add-key-binding \s :command-mode save-file)
  (set-character-handler #(insert-character %)))
 
 (defn set-editor-size [[terminal-w terminal-h]]
