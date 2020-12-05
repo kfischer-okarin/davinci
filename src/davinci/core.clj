@@ -32,6 +32,10 @@
  (add-key-binding \s :command-mode save-file)
  (set-character-handler #(insert-character %)))
 
+; TODO add execute command action
+(defn get-available-actions []
+  (keys (ns-publics 'davinci.actions)))
+
 (defn set-editor-size [[terminal-w terminal-h]]
   (e/execute-action (set-size [terminal-w (dec terminal-h)])))
 
