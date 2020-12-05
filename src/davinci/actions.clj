@@ -42,7 +42,13 @@
 
 (defn replace-lines [[start end] new-lines]
   (fn [editor]
-    (update editor :buffer #(into [] cat [(take start %) new-lines (drop end %)]))))
+    (let [new-lines-vector (if (vector? new-lines) new-lines (vector new-lines))]
+      (update editor :buffer #(into [] cat [(take start %) new-lines-vector (drop end %)])))))
+
+(defn replace-current-line [new-lines]
+  (fn [editor]
+    (let [[_ y] (:cursor editor)]
+      ((replace-lines [y (inc y)] new-lines) editor))))
 
 (defn delete-previous-character [editor]
   (let [[x y] (:cursor editor)]
@@ -53,18 +59,18 @@
       (if (pos? y)
         (let [previous-line (get-previous-line editor)
               merged-with-previous-line (str previous-line (get-current-line editor))
-              merge-lines (replace-lines [(dec y) (inc y)] [merged-with-previous-line])]
+              merge-lines (replace-lines [(dec y) (inc y)] merged-with-previous-line)]
           (-> editor
               merge-lines
               (assoc :cursor [(count previous-line) (dec y)])))
         editor))))
 
 (defn insert-newline [editor]
-  (let [[x y] (:cursor editor)
+  (let [[x _] (:cursor editor)
         current-line (get-current-line editor)
         before-cursor (subs current-line 0 x)
         after-cursor (subs current-line x)
-        split-line-at-cursor (replace-lines [y (inc y)] [before-cursor after-cursor])]
+        split-line-at-cursor (replace-current-line [before-cursor after-cursor])]
     (-> editor
         split-line-at-cursor
         move-cursor-right)))
@@ -99,11 +105,15 @@
   (insert-string (str character)))
 
 (defn delete-line [editor]
-  (let [[_ y] (:cursor editor) line-count (get-line-count editor)]
+  (let [line-count (get-line-count editor)]
     (-> editor
-        ((replace-lines [y (inc y)] (if (> line-count 1) [] [""])))
+        ((replace-current-line (if (> line-count 1) [] "")))
         (clamp-cursor)
         (clamp-offset))))
+
+(defn delete-until-end-of-line [editor]
+  (let [[x y] (:cursor editor)]
+    ((replace-current-line (subs (get-current-line editor) 0 x)) editor)))
 
 (defn set-size [size]
   (fn [editor]

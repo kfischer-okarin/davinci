@@ -25,10 +25,25 @@
         (is (= ((save-file-to "new-file.txt") editor) editor))
         (is (= @output ["new-file.txt" "Line 1\nLine 2\n"]))))))
 
-(deftest test-replace-lines
+(deftest test-replace-lines-with-lines
   (let [editor (editor-with {:buffer ["Line 0" "Line 1" "Line 2" "Line 3"]})
         expected-next-editor (merge editor {:buffer ["Line 0" "New Line 0" "New Line 1" "New Line 2" "Line 3"]})]
     (is (= ((replace-lines [1 3] ["New Line 0" "New Line 1" "New Line 2"]) editor) expected-next-editor))))
+
+(deftest test-replace-lines-with-string
+  (let [editor (editor-with {:buffer ["Line 0" "Line 1" "Line 2" "Line 3"]})
+        expected-next-editor (merge editor {:buffer ["Line 0" "New Line" "Line 3"]})]
+    (is (= ((replace-lines [1 3] "New Line") editor) expected-next-editor))))
+
+(deftest test-replace-current-line-with-lines
+  (let [editor (editor-with {:buffer ["Line 0" "Line 1" "Line 2"] :cursor [0 1]})
+        expected-next-editor (merge editor {:buffer ["Line 0" "New Line 1" "New Line 2" "Line 2"]})]
+    (is (= ((replace-current-line ["New Line 1" "New Line 2"]) editor) expected-next-editor))))
+
+(deftest test-replace-current-line-with-string
+  (let [editor (editor-with {:buffer ["Line 0" "Line 1" "Line 2"] :cursor [0 1]})
+        expected-next-editor (merge editor {:buffer ["Line 0" "New Line" "Line 2"]})]
+    (is (= ((replace-current-line "New Line") editor) expected-next-editor))))
 
 (deftest test-delete-previous-character
   (let [editor (editor-with {:buffer ["This is some text" "Second line is nice"] :cursor [11 0]})
@@ -189,6 +204,11 @@
   (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3"] :cursor [0 2] :offset [0 2]})
         expected-next-editor (merge editor {:buffer ["Line 1" "Line 2"] :cursor [0 1] :offset [0 1]})]
     (is (= (delete-line editor) expected-next-editor))))
+
+(deftest test-delete-until-end-of-line
+  (let [editor (editor-with {:buffer ["Line 1" "Line 2"] :cursor [3 1]})
+        expected-next-editor (merge editor {:buffer ["Line 1" "Lin"]})]
+    (is (= (delete-until-end-of-line editor) expected-next-editor))))
 
 (deftest test-set-size
   (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3" "Line 4"] :size [80 2]})
