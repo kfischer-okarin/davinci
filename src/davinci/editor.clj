@@ -17,8 +17,8 @@
 (defn execute-action [action]
   (swap! state action))
 
-(defn bind-key [key action]
-  (swap! state #(assoc-in % [:key-bindings (if (map? key) key {:key key :modifiers #{}})] action)))
+(defn execute-actions [& actions]
+  (doseq [action actions] (execute-action action)))
 
 (defn get-action-for-key [key]
   (get-in @state [:key-bindings key]))

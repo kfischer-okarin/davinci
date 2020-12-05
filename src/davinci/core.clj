@@ -19,17 +19,18 @@
                   do-nothing))]
     (e/execute-action action)))
 
-(e/bind-key {:key \w :modifiers #{:ctrl}} quit-editor)
-(e/bind-key :up move-cursor-up)
-(e/bind-key :right move-cursor-right)
-(e/bind-key :left move-cursor-left)
-(e/bind-key :down move-cursor-down)
-(e/bind-key :page-up page-up)
-(e/bind-key :page-down page-down)
-(e/bind-key :home move-cursor-to-beginning-of-line)
-(e/bind-key :end move-cursor-to-end-of-line)
-(e/bind-key :backspace delete-previous-character)
-(e/bind-key :enter insert-newline)
+(e/execute-actions
+ (add-key-binding \w :ctrl quit-editor)
+ (add-key-binding :up move-cursor-up)
+ (add-key-binding :right move-cursor-right)
+ (add-key-binding :left move-cursor-left)
+ (add-key-binding :down move-cursor-down)
+ (add-key-binding :page-up page-up)
+ (add-key-binding :page-down page-down)
+ (add-key-binding :home move-cursor-to-beginning-of-line)
+ (add-key-binding :end move-cursor-to-end-of-line)
+ (add-key-binding :backspace delete-previous-character)
+ (add-key-binding :enter insert-newline))
 
 (defn set-editor-size [[terminal-w terminal-h]]
   (e/execute-action (set-size [terminal-w (dec terminal-h)])))

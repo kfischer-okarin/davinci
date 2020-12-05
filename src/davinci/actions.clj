@@ -119,3 +119,13 @@
 (defn unset-key-modifier [modifier]
   (fn [editor]
     (update editor :key-modifiers #(disj % modifier))))
+
+(defn add-key-binding [key & modifiers-and-action]
+  (fn [editor]
+    (let [modifiers (set (butlast modifiers-and-action))
+          action (last modifiers-and-action)]
+      (update editor :key-bindings #(assoc % {:key key :modifiers modifiers} action)))))
+
+(defn remove-key-binding [key & modifiers]
+  (fn [editor]
+    (update editor :key-bindings #(dissoc % {:key key :modifiers (set modifiers)}))))

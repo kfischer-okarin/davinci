@@ -177,3 +177,33 @@
   (let [editor (editor-with {:key-modifiers #{:mode-x :mode-y}})
         expected-next-editor (merge editor {:key-modifiers #{:mode-x}})]
     (is (= ((unset-key-modifier :mode-y) editor) expected-next-editor))))
+
+(deftest test-add-key-binding-just-key
+  (let [editor (editor-with {:key-bindings {}})
+        expected-next-editor (merge editor {:key-bindings {{:key \w :modifiers #{}} do-nothing}})]
+    (is (= ((add-key-binding \w do-nothing) editor) expected-next-editor))))
+
+(deftest test-add-key-binding-key-and-one-modifier
+  (let [editor (editor-with {:key-bindings {}})
+        expected-next-editor (merge editor {:key-bindings {{:key \x :modifiers #{:ctrl}} do-nothing}})]
+    (is (= ((add-key-binding \x :ctrl do-nothing) editor) expected-next-editor))))
+
+(deftest test-add-key-binding-key-and-two-modifier
+  (let [editor (editor-with {:key-bindings {}})
+        expected-next-editor (merge editor {:key-bindings {{:key \x :modifiers #{:ctrl :alt}} do-nothing}})]
+    (is (= ((add-key-binding \x :ctrl :alt do-nothing) editor) expected-next-editor))))
+
+(deftest test-remove-key-binding-just-key
+  (let [editor (editor-with {:key-bindings {{:key \w :modifiers #{}} do-nothing}})
+        expected-next-editor (merge editor {:key-bindings {}})]
+    (is (= ((remove-key-binding \w) editor) expected-next-editor))))
+
+(deftest test-remove-key-binding-key-and-one-modifier
+  (let [editor (editor-with {:key-bindings {{:key \x :modifiers #{:ctrl}} do-nothing}})
+        expected-next-editor (merge editor {:key-bindings {}})]
+    (is (= ((remove-key-binding \x :ctrl) editor) expected-next-editor))))
+
+(deftest test-remove-key-binding-key-and-two-modifier
+  (let [editor (editor-with {:key-bindings {{:key \x :modifiers #{:ctrl :alt}} do-nothing}})
+        expected-next-editor (merge editor {:key-bindings {}})]
+    (is (= ((remove-key-binding \x :ctrl :alt) editor) expected-next-editor))))
