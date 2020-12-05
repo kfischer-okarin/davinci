@@ -50,11 +50,16 @@
     (let [[_ y] (:cursor editor)]
       ((replace-lines [y (inc y)] new-lines) editor))))
 
+(defn update-current-line [f]
+  (fn [editor]
+    (let [[_ y] (:cursor editor) current-line (get-current-line editor)]
+      ((replace-lines [y (inc y)] (f current-line)) editor))))
+
 (defn delete-previous-character [editor]
   (let [[x y] (:cursor editor)]
     (if (pos? x)
       (-> editor
-          (update-in [:buffer y] #(str (subs % 0 (dec x)) (subs % x)))
+          ((update-current-line #(str (subs % 0 (dec x)) (subs % x))))
           move-cursor-left)
       (if (pos? y)
         (let [previous-line (get-previous-line editor)
@@ -96,9 +101,9 @@
 
 (defn insert-string [string]
   (fn [editor]
-    (let [[x y] (:cursor editor)]
+    (let [[x _] (:cursor editor)]
       (-> editor
-          (update-in [:buffer y] #(str (subs % 0 x) string (subs % x)))
+          ((update-current-line #(str (subs % 0 x) string (subs % x))))
           (update-in [:cursor 0] #(+ % (count string)))))))
 
 (defn insert-character [character]
@@ -113,7 +118,7 @@
 
 (defn delete-until-end-of-line [editor]
   (let [[x y] (:cursor editor)]
-    ((replace-current-line (subs (get-current-line editor) 0 x)) editor)))
+    ((update-current-line #(subs % 0 x)) editor)))
 
 (defn set-size [size]
   (fn [editor]
