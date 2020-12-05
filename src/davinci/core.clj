@@ -27,6 +27,8 @@
  (add-key-binding :end move-cursor-to-end-of-line)
  (add-key-binding :backspace delete-previous-character)
  (add-key-binding :enter insert-newline)
+ (add-key-binding \x :ctrl (set-key-modifier :command-mode))
+ (add-key-binding \x :command-mode (unset-key-modifier :command-mode))
  (set-character-handler #(insert-character %)))
 
 (defn set-editor-size [[terminal-w terminal-h]]
@@ -38,9 +40,11 @@
     (t/put-string terminal (format (str "%" right-w "s") right-content) :white :red)))
 
 (defn render-status-bar [terminal]
-  (let [[w h] (e/get-value :size)]
+  (let [[_ h] (e/get-value :size)]
     (t/move-cursor terminal 0 h)
-    (render-two-part-status-bar terminal (e/get-value :path) (str "Last key: " @last-key))))
+    (if (contains? (e/get-value :key-modifiers) :command-mode)
+      (render-two-part-status-bar terminal (e/get-value :path) "COMMAND MODE")
+      (render-two-part-status-bar terminal (e/get-value :path) (str "Last key: " @last-key)))))
 
 (defn render-in-terminal
   [term]
