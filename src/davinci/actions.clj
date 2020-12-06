@@ -24,21 +24,24 @@
 (defn- clamp-offset-strict [editor]
   (update-in editor [:offset 1] #(min (get-max-y-offset editor) %)))
 
+(defn move-cursor-to [position]
+  (fn [editor]
+    (-> editor
+        (assoc :cursor position)
+        (clamp-cursor)
+        (scroll-to-cursor))))
+
 (defn move-cursor-left [editor]
-  (assoc editor :cursor (get-position-left-of-cursor editor)))
+  ((move-cursor-to (get-position-left-of-cursor editor)) editor))
 
 (defn move-cursor-right [editor]
-  (assoc editor :cursor (get-position-right-of-cursor editor)))
+  ((move-cursor-to (get-position-right-of-cursor editor)) editor))
 
 (defn move-cursor-up [editor]
-  (-> editor
-      (assoc :cursor (get-position-up-of-cursor editor))
-      (scroll-to-cursor)))
+  ((move-cursor-to (get-position-up-of-cursor editor)) editor))
 
 (defn move-cursor-down [editor]
-  (-> editor
-      (assoc :cursor (get-position-down-of-cursor editor))
-      (scroll-to-cursor)))
+  ((move-cursor-to (get-position-down-of-cursor editor)) editor))
 
 (defn replace-lines [[start end] new-lines]
   (fn [editor]
@@ -67,7 +70,7 @@
               merge-lines (replace-lines [(dec y) (inc y)] merged-with-previous-line)]
           (-> editor
               merge-lines
-              (assoc :cursor [(count previous-line) (dec y)])))
+              ((move-cursor-to [(count previous-line) (dec y)]))))
         editor))))
 
 (defn insert-newline [editor]
@@ -101,10 +104,10 @@
 
 (defn insert-string [string]
   (fn [editor]
-    (let [[x _] (:cursor editor)]
+    (let [[x y] (:cursor editor)]
       (-> editor
           ((update-current-line #(str (subs % 0 x) string (subs % x))))
-          (update-in [:cursor 0] #(+ % (count string)))))))
+          ((move-cursor-to [(+ x (count string)) y]))))))
 
 (defn insert-character [character]
   (insert-string (str character)))
@@ -121,10 +124,10 @@
     ((update-current-line #(subs % 0 x)) editor)))
 
 (defn delete-from-beginning-of-line [editor]
-  (let [[x _] (:cursor editor)]
+  (let [[x y] (:cursor editor)]
     (-> editor
         ((update-current-line #(subs % x)))
-        (assoc-in [:cursor 0] 0))))
+        ((move-cursor-to [0 y])))))
 
 (defn set-size [size]
   (fn [editor]
@@ -151,10 +154,12 @@
         (assoc-in [:offset 1] (max (- oy h) 0)))))
 
 (defn move-cursor-to-beginning-of-line [editor]
-  (assoc-in editor [:cursor 0] 0))
+  (let [[x y] (:cursor editor)]
+    ((move-cursor-to [0 y]) editor)))
 
 (defn move-cursor-to-end-of-line [editor]
-  (assoc-in editor [:cursor 0] (count (get-current-line editor))))
+  (let [[x y] (:cursor editor)]
+    ((move-cursor-to [(count (get-current-line editor)) y]) editor)))
 
 (defn set-key-modifier [modifier]
   (fn [editor]
