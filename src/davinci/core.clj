@@ -24,9 +24,9 @@
   Pass command to execute as argument array replacing the filename with the keyword :filename.
   Example: (format-with-command-taking-file \"rubocop\" \"-A\" :filename)"
   (fn [editor]
-    (spit @temp-file (queries/get-buffer-as-string editor))
-    (apply sh (replace {:filename (.getAbsolutePath @temp-file)} args))
-    ((replace-buffer-with (slurp @temp-file)) editor)))
+    (spit (:path editor) (queries/get-buffer-as-string editor))
+    (apply sh (replace {:filename (:path editor)} args))
+    ((replace-buffer-with (slurp (:path editor))) editor)))
 
 (defn format-buffer [editor]
   (cond
