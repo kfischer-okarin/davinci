@@ -117,8 +117,14 @@
         (clamp-offset))))
 
 (defn delete-until-end-of-line [editor]
-  (let [[x y] (:cursor editor)]
+  (let [[x _] (:cursor editor)]
     ((update-current-line #(subs % 0 x)) editor)))
+
+(defn delete-from-beginning-of-line [editor]
+  (let [[x _] (:cursor editor)]
+    (-> editor
+        ((update-current-line #(subs % x)))
+        (assoc-in [:cursor 0] 0))))
 
 (defn set-size [size]
   (fn [editor]

@@ -52,6 +52,7 @@
  (add-key-binding \s :command-mode format-and-save)
  (add-key-binding \k :command-mode delete-line)
  (add-key-binding \l :command-mode delete-until-end-of-line)
+ (add-key-binding \j :command-mode delete-from-beginning-of-line)
  (set-character-handler insert-character))
 
 ; TODO add execute command action
