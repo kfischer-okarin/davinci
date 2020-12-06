@@ -19,14 +19,19 @@
                 do-nothing)]
     (e/execute-action action)))
 
-(defn format-with-rubocop [editor]
-  (spit @temp-file (queries/get-buffer-as-string editor))
-  (sh "rubocop" "-A" (.getAbsolutePath @temp-file))
-  ((replace-buffer-with (slurp @temp-file)) editor))
+(defn format-with-command-taking-file [& args]
+  "Use external command to format buffer contents.
+  Pass command to execute as argument array replacing the filename with the keyword :filename.
+  Example: (format-with-command-taking-file \"rubocop\" \"-A\" :filename)"
+  (fn [editor]
+    (spit @temp-file (queries/get-buffer-as-string editor))
+    (apply sh (replace {:filename (.getAbsolutePath @temp-file)} args))
+    ((replace-buffer-with (slurp @temp-file)) editor)))
 
 (defn format-buffer [editor]
   (cond
-    (string/ends-with? (e/get-value :path) ".rb") (format-with-rubocop editor)
+    (string/ends-with? (e/get-value :path) ".rb") ((format-with-command-taking-file "rubocop" "-A" :filename) editor)
+    (string/ends-with? (e/get-value :path) ".clj") ((format-with-command-taking-file "lein" "cljfmt" "fix" :filename) editor)
     :else editor))
 
 (defn format-and-save [editor]
