@@ -215,6 +215,11 @@
         expected-next-editor (merge editor {:buffer ["Line 1" "e 2"] :cursor [0 1]})]
     (is (= (delete-from-beginning-of-line editor) expected-next-editor))))
 
+(deftest test-duplicate-line
+  (let [editor (editor-with {:buffer ["Line 1" "Line 2"] :cursor [2 1]})
+        expected-next-editor (merge editor {:buffer ["Line 1" "Line 2" "Line 2"] :cursor [2 2]})]
+    (is (= (duplicate-line editor) expected-next-editor))))
+
 (deftest test-set-size
   (let [editor (editor-with {:buffer ["Line 1" "Line 2" "Line 3" "Line 4"] :size [80 2]})
         expected-next-editor (merge editor {:size [80 4]})]

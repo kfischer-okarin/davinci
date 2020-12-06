@@ -129,6 +129,12 @@
         ((update-current-line #(subs % x)))
         ((move-cursor-to [0 y])))))
 
+(defn duplicate-line [editor]
+  (let [current-line (get-current-line editor)]
+    (-> editor
+        ((replace-current-line [current-line current-line]))
+        (move-cursor-down))))
+
 (defn set-size [size]
   (fn [editor]
     (-> editor
