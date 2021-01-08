@@ -39,27 +39,29 @@
       (format-buffer)
       (save-file)))
 
-(e/execute-actions
- (add-key-binding \w :ctrl quit-editor)
- (add-key-binding :up move-cursor-up)
- (add-key-binding :right move-cursor-right)
- (add-key-binding :left move-cursor-left)
- (add-key-binding :down move-cursor-down)
- (add-key-binding :page-up page-up)
- (add-key-binding :page-down page-down)
- (add-key-binding :home move-cursor-to-beginning-of-line)
- (add-key-binding :end move-cursor-to-end-of-line)
- (add-key-binding :backspace delete-previous-character)
- (add-key-binding :enter insert-newline)
- (add-key-binding :tab (insert-string "  "))
- (add-key-binding \x :ctrl (set-key-modifier :command-mode))
- (add-key-binding \x :command-mode (unset-key-modifier :command-mode))
- (add-key-binding \s :command-mode format-and-save)
- (add-key-binding \k :command-mode delete-line)
- (add-key-binding \l :command-mode delete-until-end-of-line)
- (add-key-binding \j :command-mode delete-from-beginning-of-line)
- (add-key-binding \d :command-mode duplicate-line)
- (set-character-handler insert-character))
+(defn init-keybindings
+  []
+  (e/execute-actions
+   (add-key-binding \w :ctrl quit-editor)
+   (add-key-binding :up move-cursor-up)
+   (add-key-binding :right move-cursor-right)
+   (add-key-binding :left move-cursor-left)
+   (add-key-binding :down move-cursor-down)
+   (add-key-binding :page-up page-up)
+   (add-key-binding :page-down page-down)
+   (add-key-binding :home move-cursor-to-beginning-of-line)
+   (add-key-binding :end move-cursor-to-end-of-line)
+   (add-key-binding :backspace delete-previous-character)
+   (add-key-binding :enter insert-newline)
+   (add-key-binding :tab (insert-string "  "))
+   (add-key-binding \x :ctrl (set-key-modifier :command-mode))
+   (add-key-binding \x :command-mode (unset-key-modifier :command-mode))
+   (add-key-binding \s :command-mode format-and-save)
+   (add-key-binding \k :command-mode delete-line)
+   (add-key-binding \l :command-mode delete-until-end-of-line)
+   (add-key-binding \j :command-mode delete-from-beginning-of-line)
+   (add-key-binding \d :command-mode duplicate-line)
+   (set-character-handler insert-character)))
 
 ; TODO add execute command action
 (defn get-available-actions []
@@ -100,15 +102,20 @@
                               (render-in-terminal terminal)))
     terminal))
 
-(defn -main
+(defn main
   "I don't do a whole lot ... yet."
   ([] (println "No args"))
   ([filename]
+   (reset! e/state e/initial-state)
+   (init-keybindings)
    (reset! temp-file (s/get-tempfile))
    (e/execute-action (open-file filename))
    (let [term (init-terminal)]
      (t/in-terminal term
                     (while (e/get-value :running)
                       (render-in-terminal term)
-                      (handle-key (t/get-key term)))))
-   (System/exit 0))) ; Quit immediately (because of possible future threads hanging around)
+                      (handle-key (t/get-key term)))))))
+
+(defn -main [& args]
+  (apply main args)
+  (System/exit 0)) ; Quit immediately (because of possible future threads hanging around)
