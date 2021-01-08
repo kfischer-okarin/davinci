@@ -30,13 +30,22 @@
                   t/move-cursor (record-function-call :move-cursor operations)
                   t/get-key (return-in-order keys)]
       (reset! operations [])
-      (reset! keys [{:key \w :modifiers #{:ctrl}}])
+      (reset! keys [{:key \w :modifiers #{:ctrl}} {:key \a :modifiers #{}}])
       (main "test.txt")
       (reset! last-key nil)
-      (is (= @operations [[:put-string :term "My Text\n"]
+      (is (= @operations [; Initial render
+                          [:put-string :term "My Text\n"]
                           [:put-string :term "Line 2\n"]
                           [:put-string :term "\n"]
                           [:move-cursor :term 0 3]
                           [:put-string :term "test.txt:1:1   " :white :red]
                           [:put-string :term "     Last key: " :white :red]
-                          [:move-cursor :term 0 0]])))))
+                          [:move-cursor :term 0 0]
+                          ; After pressing a
+                          [:put-string :term "aMy Text\n"]
+                          [:put-string :term "Line 2\n"]
+                          [:put-string :term "\n"]
+                          [:move-cursor :term 0 3]
+                          [:put-string :term "test.txt:1:2   " :white :red]
+                          [:put-string :term "Last key: {:key \\a, :modifiers #{}}" :white :red]
+                          [:move-cursor :term 1 0]])))))
