@@ -8,5 +8,8 @@
   :main ^:skip-aot davinci.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all
-                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}
+                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
+             :test {:dependencies [[pjstadig/humane-test-output "0.10.0"]]
+                    :injections [(require 'pjstadig.humane-test-output)
+                                 (pjstadig.humane-test-output/activate!)]}}
   :plugins [[lein-cloverage "1.1.2"]])

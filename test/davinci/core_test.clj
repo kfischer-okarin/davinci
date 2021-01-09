@@ -44,39 +44,40 @@
                     {:key \a :modifiers #{}}])
       (main "test.txt")
       (reset! last-key nil)
-      (is (= @operations [; Initial render
-                          [:put-string term "My Text\n"]
-                          [:put-string term "Line 2\n"]
-                          [:put-string term "Line 3\n"]
-                          [:move-cursor term 0 3]
-                          [:put-string term "test.txt:1:1                            " :white :red]
-                          [:put-string term "                              Last key: " :white :red]
-                          [:move-cursor term 0 0]
-                          ; After pressing a
-                          [:put-string term "aMy Text\n"]
-                          [:put-string term "Line 2\n"]
-                          [:put-string term "Line 3\n"]
-                          [:move-cursor term 0 3]
-                          [:put-string term "test.txt:1:2                            " :white :red]
-                          [:put-string term "     Last key: {:key \\a, :modifiers #{}}" :white :red]
-                          [:move-cursor term 1 0]
-                          ; After pressing F15 (no function)
-                          [:put-string term "aMy Text\n"]
-                          [:put-string term "Line 2\n"]
-                          [:put-string term "Line 3\n"]
-                          [:move-cursor term 0 3]
-                          [:put-string term "test.txt:1:2                            " :white :red]
-                          [:put-string term "   Last key: {:key :f15, :modifiers #{}}" :white :red]
-                          [:move-cursor term 1 0]
-                          ; After pressing page down
-                          [:put-string term "Line 3\n"]
-                          [:put-string term "Last Line\n"]
-                          [:put-string term "\n"]
-                          [:move-cursor term 0 3]
-                          [:put-string term "test.txt:4:2                            " :white :red]
-                          [:put-string term "Last key: {:key :page-down, :modifiers #{}}" :white :red]
-                          [:move-cursor term 1 1]
-                          [:stop term]])))))
+      (is (= [; Initial render
+              [:put-string term "My Text\n"]
+              [:put-string term "Line 2\n"]
+              [:put-string term "Line 3\n"]
+              [:move-cursor term 0 3]
+              [:put-string term "test.txt:1:1                            " :white :red]
+              [:put-string term "                              Last key: " :white :red]
+              [:move-cursor term 0 0]
+              ; After pressing a
+              [:put-string term "aMy Text\n"]
+              [:put-string term "Line 2\n"]
+              [:put-string term "Line 3\n"]
+              [:move-cursor term 0 3]
+              [:put-string term "test.txt:1:2                            " :white :red]
+              [:put-string term "     Last key: {:key \\a, :modifiers #{}}" :white :red]
+              [:move-cursor term 1 0]
+              ; After pressing F15 (no function)
+              [:put-string term "aMy Text\n"]
+              [:put-string term "Line 2\n"]
+              [:put-string term "Line 3\n"]
+              [:move-cursor term 0 3]
+              [:put-string term "test.txt:1:2                            " :white :red]
+              [:put-string term "   Last key: {:key :f15, :modifiers #{}}" :white :red]
+              [:move-cursor term 1 0]
+              ; After pressing page down
+              [:put-string term "Line 3\n"]
+              [:put-string term "Last Line\n"]
+              [:put-string term "\n"]
+              [:move-cursor term 0 3]
+              [:put-string term "test.txt:4:2                            " :white :red]
+              [:put-string term "Last key: {:key :page-down, :modifiers #{}}" :white :red]
+              [:move-cursor term 1 1]
+              [:stop term]]
+             @operations)))))
 
 (deftest test-main-on-error
   (let [operations (atom nil) term (proxy [Terminal] []) exception (Exception. "Some error")]
@@ -92,5 +93,6 @@
                   t/print-stacktrace (record-function-call :print-stacktrace operations)]
       (reset! operations [])
       (main "test.txt")
-      (is (= @operations [[:stop term]
-                          [:print-stacktrace exception]])))))
+      (is (= [[:stop term]
+              [:print-stacktrace exception]]
+             @operations)))))
