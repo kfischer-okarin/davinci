@@ -11,25 +11,14 @@
                     :character-handlers {} ; active-modifiers -> handler
                     :running true})
 
-(def state (atom initial-state))
+(defn- with-constant-modifiers [editor key]
+  (update key :modifiers #(set/union % (:key-modifiers editor))))
 
-(defn get-value [query]
-  (query @state))
+(defn get-action-for-key [editor key]
+  (get-in editor [:key-bindings (with-constant-modifiers editor key)]))
 
-(defn execute-action [action]
-  (swap! state action))
-
-(defn execute-actions [& actions]
-  (doseq [action actions] (execute-action action)))
-
-(defn- with-constant-modifiers [key]
-  (update key :modifiers #(set/union % (get-value :key-modifiers))))
-
-(defn get-action-for-key [key]
-  (get-in @state [:key-bindings (with-constant-modifiers key)]))
-
-(defn get-character-handler-action-for-key [key]
+(defn get-character-handler-action-for-key [editor key]
   (let [key-without-modifiers (:key key)
-        character-handler (get-in @state [:character-handlers (:modifiers (with-constant-modifiers key))])]
+        character-handler (get-in editor [:character-handlers (:modifiers (with-constant-modifiers editor key))])]
     (if (and (char? key-without-modifiers) character-handler)
       (character-handler key-without-modifiers))))

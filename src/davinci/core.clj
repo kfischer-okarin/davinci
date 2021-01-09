@@ -8,16 +8,23 @@
             [davinci.terminal :as t])
   (:gen-class))
 
+(def editor (atom nil))
 (def last-key (atom nil))
 (def temp-file (atom nil))
+
+(defn execute-action [action]
+  (swap! editor action))
+
+(defn execute-actions [& actions]
+  (doseq [action actions] (execute-action action)))
 
 (defn handle-key [key]
   (reset! last-key key)
   (let [action (or
-                (e/get-action-for-key key)
-                (e/get-character-handler-action-for-key key)
+                (e/get-action-for-key @editor key)
+                (e/get-character-handler-action-for-key @editor key)
                 do-nothing)]
-    (e/execute-action action)))
+    (execute-action action)))
 
 (defn format-with-command-taking-file [& args]
   "Use external command to format buffer contents.
@@ -30,8 +37,8 @@
 
 (defn format-buffer [editor]
   (cond
-    (string/ends-with? (e/get-value :path) ".rb") ((format-with-command-taking-file "rubocop" "-A" :filename) editor)
-    (string/ends-with? (e/get-value :path) ".clj") ((format-with-command-taking-file "lein" "cljfmt" "fix" :filename) editor)
+    (string/ends-with? (:path editor) ".rb") ((format-with-command-taking-file "rubocop" "-A" :filename) editor)
+    (string/ends-with? (:path editor) ".clj") ((format-with-command-taking-file "lein" "cljfmt" "fix" :filename) editor)
     :else editor))
 
 (defn format-and-save [editor]
@@ -41,7 +48,7 @@
 
 (defn init-keybindings
   []
-  (e/execute-actions
+  (execute-actions
    (add-key-binding \w :ctrl quit-editor)
    (add-key-binding :up move-cursor-up)
    (add-key-binding :right move-cursor-right)
@@ -68,27 +75,27 @@
   (keys (ns-publics 'davinci.actions)))
 
 (defn set-editor-size [[terminal-w terminal-h]]
-  (e/execute-action (set-size [terminal-w (dec terminal-h)])))
+  (execute-action (set-size [terminal-w (dec terminal-h)])))
 
 (defn render-two-part-status-bar [terminal left-content right-content]
-  (let [[w _] (e/get-value :size) left-w (quot w 2) right-w (- w left-w)]
+  (let [[w _] (:size @editor) left-w (quot w 2) right-w (- w left-w)]
     (t/put-string terminal (format (str "%-" left-w "s") left-content) :white :red)
     (t/put-string terminal (format (str "%" right-w "s") right-content) :white :red)))
 
 (defn render-status-bar [terminal]
-  (let [[_ h] (e/get-value :size) [x y] (e/get-value :cursor) position (str (e/get-value :path) ":" (inc y) ":" (inc x))]
+  (let [[_ h] (:size @editor) [x y] (:cursor @editor) position (str (:path @editor) ":" (inc y) ":" (inc x))]
     (t/move-cursor terminal 0 h)
-    (if (contains? (e/get-value :key-modifiers) :command-mode)
+    (if (contains? (:key-modifiers @editor) :command-mode)
       (render-two-part-status-bar terminal position "COMMAND MODE")
       (render-two-part-status-bar terminal position (str "Last key: " @last-key)))))
 
 (defn render-in-terminal
   [term]
   (t/clear term)
-  (doseq [line (e/get-value queries/get-visible-lines)]
+  (doseq [line (queries/get-visible-lines @editor)]
     (t/put-string term (str line \newline)))
-  (let [[x y] (e/get-value :cursor)
-        [ox oy] (e/get-value :offset)]
+  (let [[x y] (:cursor @editor)
+        [ox oy] (:offset @editor)]
     (render-status-bar term)
     (t/move-cursor term (- x ox) (- y oy)))
   (t/flush-terminal term))
@@ -106,13 +113,13 @@
   "I don't do a whole lot ... yet."
   ([] (println "No args"))
   ([filename]
-   (reset! e/state e/initial-state)
+   (reset! editor e/initial-state)
    (init-keybindings)
    (reset! temp-file (s/get-tempfile))
-   (e/execute-action (open-file filename))
+   (execute-action (open-file filename))
    (let [term (init-terminal)]
      (t/in-terminal term
-                    (while (e/get-value :running)
+                    (while (:running @editor)
                       (render-in-terminal term)
                       (handle-key (t/get-key term)))))))
 
