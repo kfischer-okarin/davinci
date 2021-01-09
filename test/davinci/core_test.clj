@@ -30,7 +30,7 @@
                   t/add-resize-listener do-nothing
                   t/get-size (constantly [80 4])
                   t/start do-nothing
-                  t/stop do-nothing
+                  t/stop (record-function-call :stop operations)
                   t/flush-terminal do-nothing
                   t/clear do-nothing
                   t/move-cursor (record-function-call :move-cursor operations)
@@ -62,4 +62,5 @@
                           [:move-cursor term 0 3]
                           [:put-string term "test.txt:1:2                            " :white :red]
                           [:put-string term "   Last key: {:key :f15, :modifiers #{}}" :white :red]
-                          [:move-cursor term 1 0]])))))
+                          [:move-cursor term 1 0]
+                          [:stop term]])))))
