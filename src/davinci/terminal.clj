@@ -135,6 +135,8 @@
     {:key (parse-key key)
      :modifiers (get-key-modifiers key)}))
 
+(defn print-stacktrace [exception] (.printStackTrace exception))
+
 (defmacro in-terminal [terminal & body]
   `(do
      (start ~terminal)
@@ -143,4 +145,4 @@
        (stop ~terminal)
        (catch Exception e#
          (stop ~terminal)
-         (.printStackTrace e#)))))
+         (print-stacktrace e#)))))

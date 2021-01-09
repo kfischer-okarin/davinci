@@ -21,7 +21,9 @@
 
 (def do-nothing (constantly nil))
 
-(deftest test-integration
+(defn raise-exception [exception] (fn [& _] (throw exception)))
+
+(deftest test-main
   (let [operations (atom nil) keys (atom nil) term (proxy [Terminal] [])]
     (with-redefs [t/put-string (record-function-call :put-string operations)
                   s/get-tempfile do-nothing
@@ -64,3 +66,20 @@
                           [:put-string term "   Last key: {:key :f15, :modifiers #{}}" :white :red]
                           [:move-cursor term 1 0]
                           [:stop term]])))))
+
+(deftest test-main-on-error
+  (let [operations (atom nil) term (proxy [Terminal] []) exception (Exception. "Some error")]
+    (with-redefs [t/put-string (raise-exception exception)
+                  s/get-tempfile do-nothing
+                  slurp (constantly "My Text\nLine 2\nLine 3\nLast Line\n")
+                  t/get-terminal (constantly term)
+                  t/add-resize-listener do-nothing
+                  t/get-size (constantly [80 4])
+                  t/start do-nothing
+                  t/stop (record-function-call :stop operations)
+                  t/clear do-nothing
+                  t/print-stacktrace (record-function-call :print-stacktrace operations)]
+      (reset! operations [])
+      (main "test.txt")
+      (is (= @operations [[:stop term]
+                          [:print-stacktrace exception]])))))
