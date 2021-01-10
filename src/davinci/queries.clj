@@ -1,9 +1,15 @@
 (ns davinci.queries
   (:require [clojure.string :as string]))
 
+(defn is-running [editor]
+  (:running editor))
+
+(defn get-cursor [editor]
+  (:cursor editor))
+
 (defn get-line-relative-to-cursor [dy]
   (fn [editor]
-    (let [[_ y] (:cursor editor)]
+    (let [[_ y] (get-cursor editor)]
       (get-in editor [:buffer (+ y dy)]))))
 
 (def get-previous-line
@@ -30,7 +36,7 @@
     (subvec (:buffer editor) oy (min (+ oy h) (get-line-count editor)))))
 
 (defn get-position-left-of-cursor [editor]
-  (let [[x y] (:cursor editor)]
+  (let [[x y] (get-cursor editor)]
     (if (pos? x)
       [(dec x) y]
       (let [previous-line (get-previous-line editor)]
@@ -39,7 +45,7 @@
           [x y])))))
 
 (defn get-position-right-of-cursor [editor]
-  (let [[x y] (:cursor editor)
+  (let [[x y] (get-cursor editor)
         current-line (get-current-line editor)
         current-line-length (count current-line)]
     (if (< x current-line-length)
@@ -50,7 +56,7 @@
           [x y])))))
 
 (defn get-position-up-of-cursor [editor]
-  (let [[x y] (:cursor editor)
+  (let [[x y] (get-cursor editor)
         previous-line (get-previous-line editor)]
     (if-not previous-line
       [x y]
@@ -58,7 +64,7 @@
         [(min previous-line-length x) (dec y)]))))
 
 (defn get-position-down-of-cursor [editor]
-  (let [[x y] (:cursor editor)
+  (let [[x y] (get-cursor editor)
         next-line (get-next-line editor)]
     (if-not next-line
       [x y]

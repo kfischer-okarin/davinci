@@ -1,22 +1,35 @@
 (ns davinci.actions
   (:require [davinci.queries :refer :all]))
 
+(defmacro deftransform [name args & body]
+  "Defines a parametrized transformation and automatically adds an partial arity which returns an 1-ary function which can be used
+  as parameterless transformation"
+  (let [args-without-last (pop args)
+        partial-args (into [name] args-without-last)]
+    `(def ~name
+       (fn
+         (~args ~@body)
+         (~args-without-last (apply partial ~partial-args))))))
+
 (defn quit-editor [editor]
   (assoc editor :running false))
 
+(deftransform set-cursor [cursor editor]
+  (assoc editor :cursor cursor))
+
 (defn- scroll-to-cursor [editor]
-  (let [[x y] (:cursor editor) [w h] (:size editor) [ox oy] (:offset editor)]
+  (let [[x y] (get-cursor editor) [w h] (:size editor) [ox oy] (:offset editor)]
     (cond
       (>= y (+ h oy)) (assoc-in editor [:offset 1] (- y (dec h)))
       (< y oy) (assoc-in editor [:offset 1] y)
       :else editor)))
 
 (defn- clamp-cursor [editor]
-  (let [[x y] (:cursor editor)
+  (let [[x y] (get-cursor editor)
         fixed-y (min (get-max-y editor) (max 0 y))
         line-length (count (get-in editor [:buffer fixed-y]))
         fixed-x (min line-length x)]
-    (assoc editor :cursor [fixed-x fixed-y])))
+    (set-cursor [fixed-x fixed-y] editor)))
 
 (defn- clamp-offset [editor]
   (update-in editor [:offset 1] #(min (get-max-y editor) %)))
@@ -24,24 +37,23 @@
 (defn- clamp-offset-strict [editor]
   (update-in editor [:offset 1] #(min (get-max-y-offset editor) %)))
 
-(defn move-cursor-to [position]
-  (fn [editor]
-    (-> editor
-        (assoc :cursor position)
-        (clamp-cursor)
-        (scroll-to-cursor))))
+(deftransform move-cursor-to [position editor]
+  (->> editor
+       (set-cursor position)
+       scroll-to-cursor
+       clamp-cursor))
 
 (defn move-cursor-left [editor]
-  ((move-cursor-to (get-position-left-of-cursor editor)) editor))
+  (move-cursor-to (get-position-left-of-cursor editor) editor))
 
 (defn move-cursor-right [editor]
-  ((move-cursor-to (get-position-right-of-cursor editor)) editor))
+  (move-cursor-to (get-position-right-of-cursor editor) editor))
 
 (defn move-cursor-up [editor]
-  ((move-cursor-to (get-position-up-of-cursor editor)) editor))
+  (move-cursor-to (get-position-up-of-cursor editor) editor))
 
 (defn move-cursor-down [editor]
-  ((move-cursor-to (get-position-down-of-cursor editor)) editor))
+  (move-cursor-to (get-position-down-of-cursor editor) editor))
 
 (defn replace-lines [[start end] new-lines]
   (fn [editor]
@@ -50,16 +62,16 @@
 
 (defn replace-current-line [new-lines]
   (fn [editor]
-    (let [[_ y] (:cursor editor)]
+    (let [[_ y] (get-cursor editor)]
       ((replace-lines [y (inc y)] new-lines) editor))))
 
 (defn update-current-line [f]
   (fn [editor]
-    (let [[_ y] (:cursor editor) current-line (get-current-line editor)]
+    (let [[_ y] (get-cursor editor) current-line (get-current-line editor)]
       ((replace-lines [y (inc y)] (f current-line)) editor))))
 
 (defn delete-previous-character [editor]
-  (let [[x y] (:cursor editor)]
+  (let [[x y] (get-cursor editor)]
     (if (pos? x)
       (-> editor
           ((update-current-line #(str (subs % 0 (dec x)) (subs % x))))
@@ -68,13 +80,13 @@
         (let [previous-line (get-previous-line editor)
               merged-with-previous-line (str previous-line (get-current-line editor))
               merge-lines (replace-lines [(dec y) (inc y)] merged-with-previous-line)]
-          (-> editor
-              merge-lines
-              ((move-cursor-to [(count previous-line) (dec y)]))))
+          (->> editor
+               merge-lines
+               (move-cursor-to [(count previous-line) (dec y)])))
         editor))))
 
 (defn insert-newline [editor]
-  (let [[x _] (:cursor editor)
+  (let [[x _] (get-cursor editor)
         current-line (get-current-line editor)
         before-cursor (subs current-line 0 x)
         after-cursor (subs current-line x)
@@ -104,7 +116,7 @@
 
 (defn insert-string [string]
   (fn [editor]
-    (let [[x y] (:cursor editor)]
+    (let [[x y] (get-cursor editor)]
       (-> editor
           ((update-current-line #(str (subs % 0 x) string (subs % x))))
           ((move-cursor-to [(+ x (count string)) y]))))))
@@ -120,11 +132,11 @@
         (clamp-offset))))
 
 (defn delete-until-end-of-line [editor]
-  (let [[x _] (:cursor editor)]
+  (let [[x _] (get-cursor editor)]
     ((update-current-line #(subs % 0 x)) editor)))
 
 (defn delete-from-beginning-of-line [editor]
-  (let [[x y] (:cursor editor)]
+  (let [[x y] (get-cursor editor)]
     (-> editor
         ((update-current-line #(subs % x)))
         ((move-cursor-to [0 y])))))
@@ -133,7 +145,7 @@
   (let [current-line (get-current-line editor)]
     (-> editor
         ((replace-current-line [current-line current-line]))
-        (move-cursor-down))))
+        move-cursor-down)))
 
 (defn set-size [size]
   (fn [editor]
@@ -142,30 +154,30 @@
         (clamp-offset-strict))))
 
 (defn page-down [editor]
-  (let [[_ y] (:cursor editor)
+  (let [[x y] (get-cursor editor)
         [_ h] (:size editor)
         [_ oy] (:offset editor)]
     (-> editor
-        (assoc-in [:cursor 1] (+ y h))
+        ((set-cursor [x (+ y h)]))
         (clamp-cursor)
         (assoc-in [:offset 1] (min (+ oy h) (get-max-y-offset editor))))))
 
 (defn page-up [editor]
-  (let [[_ y] (:cursor editor)
+  (let [[x y] (get-cursor editor)
         [_ h] (:size editor)
         [_ oy] (:offset editor)]
     (-> editor
-        (assoc-in [:cursor 1] (- y h))
+        ((set-cursor [x (- y h)]))
         (clamp-cursor)
         (assoc-in [:offset 1] (max (- oy h) 0)))))
 
 (defn move-cursor-to-beginning-of-line [editor]
-  (let [[x y] (:cursor editor)]
-    ((move-cursor-to [0 y]) editor)))
+  (let [[x y] (get-cursor editor)]
+    (move-cursor-to [0 y] editor)))
 
 (defn move-cursor-to-end-of-line [editor]
-  (let [[x y] (:cursor editor)]
-    ((move-cursor-to [(count (get-current-line editor)) y]) editor)))
+  (let [[x y] (get-cursor editor)]
+    (move-cursor-to [(count (get-current-line editor)) y] editor)))
 
 (defn set-key-modifier [modifier]
   (fn [editor]

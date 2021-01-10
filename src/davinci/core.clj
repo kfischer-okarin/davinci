@@ -83,7 +83,7 @@
     (t/put-string terminal (format (str "%" right-w "s") right-content) :white :red)))
 
 (defn render-status-bar [terminal]
-  (let [[_ h] (:size @editor) [x y] (:cursor @editor) position (str (:path @editor) ":" (inc y) ":" (inc x))]
+  (let [[_ h] (:size @editor) [x y] (queries/get-cursor @editor) position (str (:path @editor) ":" (inc y) ":" (inc x))]
     (t/move-cursor terminal 0 h)
     (if (contains? (:key-modifiers @editor) :command-mode)
       (render-two-part-status-bar terminal position "COMMAND MODE")
@@ -94,7 +94,7 @@
   (t/clear term)
   (doseq [line (queries/get-visible-lines @editor)]
     (t/put-string term (str line \newline)))
-  (let [[x y] (:cursor @editor)
+  (let [[x y] (queries/get-cursor @editor)
         [ox oy] (:offset @editor)]
     (render-status-bar term)
     (t/move-cursor term (- x ox) (- y oy)))
@@ -119,7 +119,7 @@
    (execute-action (open-file filename))
    (let [term (init-terminal)]
      (t/in-terminal term
-                    (while (:running @editor)
+                    (while (queries/is-running @editor)
                       (render-in-terminal term)
                       (handle-key (t/get-key term)))))))
 
