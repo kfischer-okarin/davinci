@@ -78,12 +78,16 @@
   (execute-action (set-size [terminal-w (dec terminal-h)])))
 
 (defn render-two-part-status-bar [terminal left-content right-content]
-  (let [[w _] (:size @editor) left-w (quot w 2) right-w (- w left-w)]
+  (let [[w _] (queries/get-size @editor)
+        left-w (quot w 2)
+        right-w (- w left-w)]
     (t/put-string terminal (format (str "%-" left-w "s") left-content) :white :red)
     (t/put-string terminal (format (str "%" right-w "s") right-content) :white :red)))
 
 (defn render-status-bar [terminal]
-  (let [[_ h] (:size @editor) [x y] (queries/get-cursor @editor) position (str (:path @editor) ":" (inc y) ":" (inc x))]
+  (let [[_ h] (queries/get-size @editor)
+        [x y] (queries/get-cursor @editor)
+        position (str (:path @editor) ":" (inc y) ":" (inc x))]
     (t/move-cursor terminal 0 h)
     (if (contains? (:key-modifiers @editor) :command-mode)
       (render-two-part-status-bar terminal position "COMMAND MODE")

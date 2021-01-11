@@ -11,6 +11,10 @@
 (defn get-buffer-as-string [editor]
   (string/join "\n" (get-buffer editor)))
 
+(def get-offset :offset)
+
+(def get-size :size)
+
 (defn get-line-relative-to-cursor [dy]
   (fn [editor]
     (let [[_ y] (get-cursor editor)]
@@ -32,11 +36,12 @@
   (dec (get-line-count editor)))
 
 (defn get-max-y-offset [editor]
-  (let [[w h] (:size editor)]
+  (let [[w h] (get-size editor)]
     (max (- (get-line-count editor) h) 0)))
 
 (defn get-visible-lines [editor]
-  (let [[_ h] (:size editor) [_ oy] (:offset editor)]
+  (let [[_ h] (get-size editor)
+        [_ oy] (get-offset editor)]
     (subvec (get-buffer editor) oy (min (+ oy h) (get-line-count editor)))))
 
 (defn get-position-left-of-cursor [editor]

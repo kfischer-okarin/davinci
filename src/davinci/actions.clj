@@ -23,11 +23,25 @@
 (deftransform set-buffer-to-string [string editor]
   (set-buffer (conj (clojure.string/split string #"\n") "") editor))
 
+(deftransform set-offset [offset editor]
+  (assoc editor :offset offset))
+
+(defn- clamp-offset-strict [editor]
+  (let [[ox oy] (get-offset editor)]
+    (set-offset [ox (min (get-max-y-offset editor) oy)] editor)))
+
+(deftransform set-size [size editor]
+  (-> editor
+      (assoc :size size)
+      (clamp-offset-strict)))
+
 (defn- scroll-to-cursor [editor]
-  (let [[x y] (get-cursor editor) [w h] (:size editor) [ox oy] (:offset editor)]
+  (let [[x y] (get-cursor editor)
+        [w h] (get-size editor)
+        [ox oy] (get-offset editor)]
     (cond
-      (>= y (+ h oy)) (assoc-in editor [:offset 1] (- y (dec h)))
-      (< y oy) (assoc-in editor [:offset 1] y)
+      (>= y (+ h oy)) (set-offset [ox (- y (dec h))] editor)
+      (< y oy) (set-offset [ox y] editor)
       :else editor)))
 
 (defn- clamp-cursor [editor]
@@ -38,10 +52,8 @@
     (set-cursor [fixed-x fixed-y] editor)))
 
 (defn- clamp-offset [editor]
-  (update-in editor [:offset 1] #(min (get-max-y editor) %)))
-
-(defn- clamp-offset-strict [editor]
-  (update-in editor [:offset 1] #(min (get-max-y-offset editor) %)))
+  (let [[ox oy] (get-offset editor)]
+    (set-offset [ox (min (get-max-y editor) oy)] editor)))
 
 (deftransform move-cursor-to [position editor]
   (->> editor
@@ -147,29 +159,23 @@
          (replace-current-line [current-line current-line])
          move-cursor-down)))
 
-(defn set-size [size]
-  (fn [editor]
-    (-> editor
-        (assoc :size size)
-        (clamp-offset-strict))))
-
 (defn page-down [editor]
   (let [[x y] (get-cursor editor)
-        [_ h] (:size editor)
-        [_ oy] (:offset editor)]
-    (-> editor
-        ((set-cursor [x (+ y h)]))
-        (clamp-cursor)
-        (assoc-in [:offset 1] (min (+ oy h) (get-max-y-offset editor))))))
+        [_ h] (get-size editor)
+        [ox oy] (get-offset editor)]
+    (->> editor
+         (set-cursor [x (+ y h)])
+         clamp-cursor
+         (set-offset [ox (min (+ oy h) (get-max-y-offset editor))]))))
 
 (defn page-up [editor]
   (let [[x y] (get-cursor editor)
-        [_ h] (:size editor)
-        [_ oy] (:offset editor)]
-    (-> editor
-        ((set-cursor [x (- y h)]))
-        (clamp-cursor)
-        (assoc-in [:offset 1] (max (- oy h) 0)))))
+        [_ h] (get-size editor)
+        [ox oy] (get-offset editor)]
+    (->> editor
+         (set-cursor [x (- y h)])
+         clamp-cursor
+         (set-offset [ox (max (- oy h) 0)]))))
 
 (defn move-cursor-to-beginning-of-line [editor]
   (let [[x y] (get-cursor editor)]
