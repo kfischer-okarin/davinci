@@ -17,6 +17,12 @@
 (deftransform set-cursor [cursor editor]
   (assoc editor :cursor cursor))
 
+(deftransform set-buffer [buffer editor]
+  (assoc editor :buffer buffer))
+
+(deftransform set-buffer-to-string [string editor]
+  (set-buffer (conj (clojure.string/split string #"\n") "") editor))
+
 (defn- scroll-to-cursor [editor]
   (let [[x y] (get-cursor editor) [w h] (:size editor) [ox oy] (:offset editor)]
     (cond
@@ -27,7 +33,7 @@
 (defn- clamp-cursor [editor]
   (let [[x y] (get-cursor editor)
         fixed-y (min (get-max-y editor) (max 0 y))
-        line-length (count (get-in editor [:buffer fixed-y]))
+        line-length (count (get (get-buffer editor) fixed-y))
         fixed-x (min line-length x)]
     (set-cursor [fixed-x fixed-y] editor)))
 
@@ -55,27 +61,27 @@
 (defn move-cursor-down [editor]
   (move-cursor-to (get-position-down-of-cursor editor) editor))
 
-(defn replace-lines [[start end] new-lines]
-  (fn [editor]
-    (let [new-lines-vector (if (vector? new-lines) new-lines (vector new-lines))]
-      (update editor :buffer #(into [] cat [(take start %) new-lines-vector (drop end %)])))))
+(deftransform replace-lines [[start end] new-lines editor]
+  (let [buffer (get-buffer editor)
+        new-lines-vector (if (vector? new-lines) new-lines (vector new-lines))
+        new-buffer (into [] cat [(take start buffer) new-lines-vector (drop end buffer)])]
+    (set-buffer new-buffer editor)))
 
-(defn replace-current-line [new-lines]
-  (fn [editor]
-    (let [[_ y] (get-cursor editor)]
-      ((replace-lines [y (inc y)] new-lines) editor))))
+(deftransform replace-current-line [new-lines editor]
+  (let [[_ y] (get-cursor editor)]
+    (replace-lines [y (inc y)] new-lines editor)))
 
-(defn update-current-line [f]
-  (fn [editor]
-    (let [[_ y] (get-cursor editor) current-line (get-current-line editor)]
-      ((replace-lines [y (inc y)] (f current-line)) editor))))
+(deftransform update-current-line [f editor]
+  (let [[_ y] (get-cursor editor)
+        current-line (get-current-line editor)]
+    (replace-lines [y (inc y)] (f current-line) editor)))
 
 (defn delete-previous-character [editor]
   (let [[x y] (get-cursor editor)]
     (if (pos? x)
-      (-> editor
-          ((update-current-line #(str (subs % 0 (dec x)) (subs % x))))
-          move-cursor-left)
+      (->> editor
+           (update-current-line #(str (subs % 0 (dec x)) (subs % x)))
+           move-cursor-left)
       (if (pos? y)
         (let [previous-line (get-previous-line editor)
               merged-with-previous-line (str previous-line (get-current-line editor))
@@ -97,55 +103,49 @@
 
 (def do-nothing identity)
 
-(defn replace-buffer-with [string]
-  #(assoc % :buffer (conj (clojure.string/split string #"\n") "")))
+(deftransform open-file [filename editor]
+  (-> editor
+      ((set-buffer-to-string (slurp filename)))
+      (assoc :path filename)))
 
-(defn open-file [filename]
-  (fn [editor]
-    (-> editor
-        ((replace-buffer-with (slurp filename)))
-        (assoc :path filename))))
-
-(defn save-file-to [filename]
-  (fn [editor]
-    (spit filename (get-buffer-as-string editor))
-    editor))
+(deftransform save-file-to [filename editor]
+  (spit filename (get-buffer-as-string editor))
+  editor)
 
 (defn save-file [editor]
-  ((save-file-to (:path editor)) editor))
+  (save-file-to (:path editor) editor))
 
-(defn insert-string [string]
-  (fn [editor]
-    (let [[x y] (get-cursor editor)]
-      (-> editor
-          ((update-current-line #(str (subs % 0 x) string (subs % x))))
-          ((move-cursor-to [(+ x (count string)) y]))))))
+(deftransform insert-string [string editor]
+  (let [[x y] (get-cursor editor)]
+    (->> editor
+         (update-current-line #(str (subs % 0 x) string (subs % x)))
+         (move-cursor-to [(+ x (count string)) y]))))
 
-(defn insert-character [character]
-  (insert-string (str character)))
+(deftransform insert-character [character editor]
+  (insert-string (str character) editor))
 
 (defn delete-line [editor]
   (let [line-count (get-line-count editor)]
-    (-> editor
-        ((replace-current-line (if (> line-count 1) [] "")))
-        (clamp-cursor)
-        (clamp-offset))))
+    (->> editor
+         (replace-current-line (if (> line-count 1) [] ""))
+         clamp-cursor
+         (clamp-offset))))
 
 (defn delete-until-end-of-line [editor]
   (let [[x _] (get-cursor editor)]
-    ((update-current-line #(subs % 0 x)) editor)))
+    (update-current-line #(subs % 0 x) editor)))
 
 (defn delete-from-beginning-of-line [editor]
   (let [[x y] (get-cursor editor)]
-    (-> editor
-        ((update-current-line #(subs % x)))
-        ((move-cursor-to [0 y])))))
+    (->> editor
+         (update-current-line #(subs % x))
+         (move-cursor-to [0 y]))))
 
 (defn duplicate-line [editor]
   (let [current-line (get-current-line editor)]
-    (-> editor
-        ((replace-current-line [current-line current-line]))
-        move-cursor-down)))
+    (->> editor
+         (replace-current-line [current-line current-line])
+         move-cursor-down)))
 
 (defn set-size [size]
   (fn [editor]

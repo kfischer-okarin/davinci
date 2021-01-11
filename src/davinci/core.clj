@@ -33,7 +33,7 @@
   (fn [editor]
     (spit (:path editor) (queries/get-buffer-as-string editor))
     (apply sh (replace {:filename (:path editor)} args))
-    ((replace-buffer-with (slurp (:path editor))) editor)))
+    ((set-buffer-to-string (slurp (:path editor))) editor)))
 
 (defn format-buffer [editor]
   (cond

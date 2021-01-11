@@ -7,10 +7,16 @@
 (defn get-cursor [editor]
   (:cursor editor))
 
+(defn get-buffer [editor]
+  (:buffer editor))
+
+(defn get-buffer-as-string [editor]
+  (string/join "\n" (get-buffer editor)))
+
 (defn get-line-relative-to-cursor [dy]
   (fn [editor]
     (let [[_ y] (get-cursor editor)]
-      (get-in editor [:buffer (+ y dy)]))))
+      (get (get-buffer editor) (+ y dy)))))
 
 (def get-previous-line
   (get-line-relative-to-cursor -1))
@@ -22,7 +28,7 @@
   (get-line-relative-to-cursor 1))
 
 (defn get-line-count [editor]
-  (count (:buffer editor)))
+  (count (get-buffer editor)))
 
 (defn get-max-y [editor]
   (dec (get-line-count editor)))
@@ -33,7 +39,7 @@
 
 (defn get-visible-lines [editor]
   (let [[_ h] (:size editor) [_ oy] (:offset editor)]
-    (subvec (:buffer editor) oy (min (+ oy h) (get-line-count editor)))))
+    (subvec (get-buffer editor) oy (min (+ oy h) (get-line-count editor)))))
 
 (defn get-position-left-of-cursor [editor]
   (let [[x y] (get-cursor editor)]
@@ -70,6 +76,3 @@
       [x y]
       (let [next-line-length (count next-line)]
         [(min next-line-length x) (inc y)]))))
-
-(defn get-buffer-as-string [editor]
-  (string/join "\n" (:buffer editor)))
