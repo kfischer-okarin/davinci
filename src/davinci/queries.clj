@@ -4,11 +4,9 @@
 (defn is-running [editor]
   (:running editor))
 
-(defn get-cursor [editor]
-  (:cursor editor))
+(def get-cursor :cursor)
 
-(defn get-buffer [editor]
-  (:buffer editor))
+(def get-buffer :buffer)
 
 (defn get-buffer-as-string [editor]
   (string/join "\n" (get-buffer editor)))
