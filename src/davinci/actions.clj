@@ -20,6 +20,9 @@
 (deftransform set-buffer [buffer editor]
   (assoc editor :buffer buffer))
 
+(deftransform set-path [path editor]
+  (assoc editor :path path))
+
 (deftransform set-buffer-to-string [string editor]
   (set-buffer (conj (clojure.string/split string #"\n") "") editor))
 
@@ -116,16 +119,16 @@
 (def do-nothing identity)
 
 (deftransform open-file [filename editor]
-  (-> editor
-      ((set-buffer-to-string (slurp filename)))
-      (assoc :path filename)))
+  (->> editor
+       (set-buffer-to-string (slurp filename))
+       (set-path filename)))
 
 (deftransform save-file-to [filename editor]
   (spit filename (get-buffer-as-string editor))
   editor)
 
 (defn save-file [editor]
-  (save-file-to (:path editor) editor))
+  (save-file-to (get-path editor) editor))
 
 (deftransform insert-string [string editor]
   (let [[x y] (get-cursor editor)]

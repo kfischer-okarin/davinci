@@ -11,6 +11,8 @@
 (defn get-buffer-as-string [editor]
   (string/join "\n" (get-buffer editor)))
 
+(def get-path :path)
+
 (def get-offset :offset)
 
 (def get-size :size)

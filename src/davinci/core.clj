@@ -31,14 +31,14 @@
   Pass command to execute as argument array replacing the filename with the keyword :filename.
   Example: (format-with-command-taking-file \"rubocop\" \"-A\" :filename)"
   (fn [editor]
-    (spit (:path editor) (queries/get-buffer-as-string editor))
-    (apply sh (replace {:filename (:path editor)} args))
-    ((set-buffer-to-string (slurp (:path editor))) editor)))
+    (spit (queries/get-path editor) (queries/get-buffer-as-string editor))
+    (apply sh (replace {:filename (queries/get-path editor)} args))
+    ((set-buffer-to-string (slurp (queries/get-path editor))) editor)))
 
 (defn format-buffer [editor]
   (cond
-    (string/ends-with? (:path editor) ".rb") ((format-with-command-taking-file "rubocop" "-A" :filename) editor)
-    (string/ends-with? (:path editor) ".clj") ((format-with-command-taking-file "lein" "cljfmt" "fix" :filename) editor)
+    (string/ends-with? (queries/get-path editor) ".rb") ((format-with-command-taking-file "rubocop" "-A" :filename) editor)
+    (string/ends-with? (queries/get-path editor) ".clj") ((format-with-command-taking-file "lein" "cljfmt" "fix" :filename) editor)
     :else editor))
 
 (defn format-and-save [editor]
@@ -87,7 +87,7 @@
 (defn render-status-bar [terminal]
   (let [[_ h] (queries/get-size @editor)
         [x y] (queries/get-cursor @editor)
-        position (str (:path @editor) ":" (inc y) ":" (inc x))]
+        position (str (queries/get-path @editor) ":" (inc y) ":" (inc x))]
     (t/move-cursor terminal 0 h)
     (if (contains? (:key-modifiers @editor) :command-mode)
       (render-two-part-status-bar terminal position "COMMAND MODE")
