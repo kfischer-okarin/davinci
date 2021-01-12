@@ -103,7 +103,7 @@
                   t/start do-nothing
                   t/stop (record-function-call :stop operations)
                   t/clear do-nothing
-                  t/print-stacktrace (record-function-call :print-stacktrace operations)]
+                  print-stacktrace (record-function-call :print-stacktrace operations)]
       (reset! operations [])
       (main "test.txt")
       (is (= [[:stop term]

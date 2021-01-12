@@ -87,7 +87,7 @@
     (set-editor-size (t/get-size terminal))
     terminal))
 
-(defn print-stacktrace [exception] (t/print-stacktrace exception))
+(defn print-stacktrace [exception] (.printStackTrace exception))
 
 (defn main
   "I don't do a whole lot ... yet."

@@ -142,8 +142,6 @@
       {:key (parse-key key)
        :modifiers (get-key-modifiers key)})))
 
-(defn print-stacktrace [exception] (.printStackTrace exception))
-
 (defn- emit-input-event [event]
   (swap! input-events #(conj % event)))
 
