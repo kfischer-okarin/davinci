@@ -5,7 +5,8 @@
             [davinci.editor :as e]
             [davinci.queries :as queries]
             [davinci.system :as s]
-            [davinci.terminal :as t])
+            [davinci.terminal :as t]
+            [davinci.ui :as ui])
   (:gen-class))
 
 (def editor (atom nil))
@@ -18,13 +19,20 @@
 (defn execute-actions [& actions]
   (doseq [action actions] (execute-action action)))
 
+(defn set-editor-size [[ui-w ui-h]]
+  (execute-action (set-size [ui-w (dec ui-h)])))
+
 (defn handle-key [key]
-  (reset! last-key key)
   (let [action (or
                 (e/get-action-for-key @editor key)
                 (e/get-character-handler-action-for-key @editor key)
                 do-nothing)]
     (execute-action action)))
+
+(defn handle-input [input]
+  (cond
+    (contains? input :key) (handle-key input)
+    (= (:type input) :resize) (set-editor-size (:payload input))))
 
 (defn format-with-command-taking-file [& args]
   "Use external command to format buffer contents.
@@ -74,44 +82,12 @@
 (defn get-available-actions []
   (keys (ns-publics 'davinci.actions)))
 
-(defn set-editor-size [[terminal-w terminal-h]]
-  (execute-action (set-size [terminal-w (dec terminal-h)])))
-
-(defn render-two-part-status-bar [terminal left-content right-content]
-  (let [[w _] (queries/get-size @editor)
-        left-w (quot w 2)
-        right-w (- w left-w)]
-    (t/put-string terminal (format (str "%-" left-w "s") left-content) :white :red)
-    (t/put-string terminal (format (str "%" right-w "s") right-content) :white :red)))
-
-(defn render-status-bar [terminal]
-  (let [[_ h] (queries/get-size @editor)
-        [x y] (queries/get-cursor @editor)
-        position (str (queries/get-path @editor) ":" (inc y) ":" (inc x))]
-    (t/move-cursor terminal 0 h)
-    (if (contains? (:key-modifiers @editor) :command-mode)
-      (render-two-part-status-bar terminal position "COMMAND MODE")
-      (render-two-part-status-bar terminal position (str "Last key: " @last-key)))))
-
-(defn render-in-terminal
-  [term]
-  (t/clear term)
-  (doseq [line (queries/get-visible-lines @editor)]
-    (t/put-string term (str line \newline)))
-  (let [[x y] (queries/get-cursor @editor)
-        [ox oy] (:offset @editor)]
-    (render-status-bar term)
-    (t/move-cursor term (- x ox) (- y oy)))
-  (t/flush-terminal term))
-
 (defn init-terminal []
-  (let [terminal (t/get-terminal)]
+  (let [terminal (t/init-terminal)]
     (set-editor-size (t/get-size terminal))
-    (t/add-resize-listener terminal
-                           #(do
-                              (set-editor-size %)
-                              (render-in-terminal terminal)))
     terminal))
+
+(defn print-stacktrace [exception] (t/print-stacktrace exception))
 
 (defn main
   "I don't do a whole lot ... yet."
@@ -121,11 +97,15 @@
    (init-keybindings)
    (reset! temp-file (s/get-tempfile))
    (execute-action (open-file filename))
-   (let [term (init-terminal)]
-     (t/in-terminal term
-                    (while (queries/is-running @editor)
-                      (render-in-terminal term)
-                      (handle-key (t/get-key term)))))))
+   (let [terminal (init-terminal)]
+     (try
+       (while (queries/is-running @editor)
+         (ui/render-editor terminal @editor)
+         (handle-input (ui/get-input terminal)))
+       (ui/shutdown terminal)
+       (catch Exception e#
+         (ui/shutdown terminal)
+         (print-stacktrace e#))))))
 
 (defn -main [& args]
   (apply main args)

@@ -1,9 +1,15 @@
 (ns davinci.terminal
   (:import
    com.googlecode.lanterna.terminal.DefaultTerminalFactory
+   com.googlecode.lanterna.terminal.Terminal
    com.googlecode.lanterna.terminal.TerminalResizeListener
    com.googlecode.lanterna.input.KeyType
-   com.googlecode.lanterna.TextColor$Indexed))
+   com.googlecode.lanterna.TextColor$Indexed)
+  (:require [davinci.queries :as queries]
+            [davinci.ui :as ui]))
+
+(def input-events (atom nil))
+(def last-key (atom nil))
 
 (defn get-terminal
   "Creates a text terminal."
@@ -80,8 +86,8 @@
    (put-string terminal string fg-color)))
 
 (defn get-key-raw
-  "Gets the raw Key object from the terminal (blocking)"
-  [terminal] (.readInput terminal))
+  "Gets the raw Key object from the terminal"
+  [terminal] (.pollInput terminal))
 
 (defn- parse-key [key]
   (case (.name (.getKeyType key))
@@ -132,17 +138,64 @@
 (defn get-key
   [terminal]
   (let [key (get-key-raw terminal)]
-    {:key (parse-key key)
-     :modifiers (get-key-modifiers key)}))
+    (if key
+      {:key (parse-key key)
+       :modifiers (get-key-modifiers key)})))
 
 (defn print-stacktrace [exception] (.printStackTrace exception))
 
-(defmacro in-terminal [terminal & body]
-  `(do
-     (start ~terminal)
-     (try
-       ~@body
-       (stop ~terminal)
-       (catch Exception e#
-         (stop ~terminal)
-         (print-stacktrace e#)))))
+(defn- emit-input-event [event]
+  (swap! input-events #(conj % event)))
+
+(defn- emit-resize-event [size]
+  (emit-input-event {:type :resize :payload size}))
+
+(defn init-terminal []
+  (reset! input-events clojure.lang.PersistentQueue/EMPTY)
+  (reset! last-key nil)
+  (let [terminal (get-terminal)]
+    (start terminal)
+    (add-resize-listener terminal
+                         (fn [size]
+                           (if (not= size [1 1]) (emit-resize-event size))))
+    terminal))
+
+(defn- render-two-part-status-bar [terminal editor left-content right-content]
+  (let [[w _] (queries/get-size editor)
+        left-w (max (quot w 2) 1)
+        right-w (max (- w left-w) 1)]
+    (put-string terminal (format (str "%-" left-w "s") left-content) :white :red)
+    (put-string terminal (format (str "%" right-w "s") right-content) :white :red)))
+
+(defn- render-status-bar [terminal editor]
+  (let [[_ h] (queries/get-size editor)
+        [x y] (queries/get-cursor editor)
+        position (str (queries/get-path editor) ":" (inc y) ":" (inc x))]
+    (move-cursor terminal 0 h)
+    (if (contains? (:key-modifiers editor) :command-mode)
+      (render-two-part-status-bar terminal editor position "COMMAND MODE")
+      (render-two-part-status-bar terminal editor position (str "Last key: " @last-key)))))
+
+(defn render-editor-in-terminal [terminal editor]
+  (clear terminal)
+  (doseq [line (queries/get-visible-lines editor)]
+    (put-string terminal (str line \newline)))
+  (let [[x y] (queries/get-cursor editor)
+        [ox oy] (queries/get-offset editor)]
+    (render-status-bar terminal editor)
+    (move-cursor terminal (- x ox) (- y oy)))
+  (flush-terminal terminal))
+
+(defn get-input-from-terminal [terminal]
+  (while (not (peek @input-events))
+    (let [key (get-key terminal)]
+      (if key (emit-input-event key))))
+  (let [input-event (peek @input-events)]
+    (if (contains? input-event :key) (reset! last-key input-event))
+    (swap! input-events pop)
+    input-event))
+
+(extend-type Terminal ui/EditorUI
+             (render-editor [terminal editor] (render-editor-in-terminal terminal editor))
+             (get-input [terminal] (get-input-from-terminal terminal))
+             (shutdown [terminal] (stop terminal)))
