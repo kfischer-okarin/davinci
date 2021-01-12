@@ -17,19 +17,24 @@
 (defn return-in-order [input-atom]
   (fn [& _] (let [return-value (peek @input-atom)]
               (swap! input-atom pop)
-              return-value)))
+              (if (fn? return-value)
+                (return-value)
+                return-value))))
 
 (def do-nothing (constantly nil))
 
 (defn raise-exception [exception] (fn [& _] (throw exception)))
 
 (deftest test-main
-  (let [operations (atom nil) keys (atom nil) term (proxy [Terminal] [])]
+  (let [operations (atom nil)
+        keys (atom nil)
+        resize-listener (atom nil)
+        term (proxy [Terminal] [])]
     (with-redefs [t/put-string (record-function-call :put-string operations)
                   s/get-tempfile do-nothing
                   slurp (constantly "My Text\nLine 2\nLine 3\nLast Line\n")
                   t/get-terminal (constantly term)
-                  t/add-resize-listener do-nothing
+                  t/add-resize-listener #(reset! resize-listener %2)
                   t/get-size (constantly [80 4])
                   t/start do-nothing
                   t/stop (record-function-call :stop operations)
@@ -39,7 +44,9 @@
                   t/get-key (return-in-order keys)]
       (reset! operations [])
       (reset! keys [{:key \w :modifiers #{:ctrl}}
-                    {:key :page-down :modifiers #{}}
+                    (fn []
+                      (@resize-listener [20 3])
+                      {:key :page-down :modifiers #{}})
                     {:key :f15 :modifiers #{}}
                     {:key \a :modifiers #{}}])
       (main "test.txt")
@@ -68,14 +75,20 @@
               [:put-string term "test.txt:1:2                            " :white :red]
               [:put-string term "   Last key: {:key :f15, :modifiers #{}}" :white :red]
               [:move-cursor term 1 0]
+              ; After resize
+              [:put-string term "aMy Text\n"]
+              [:put-string term "Line 2\n"]
+              [:move-cursor term 0 2]
+              [:put-string term "test.txt:1:2" :white :red]
+              [:put-string term "Last key: {:key :f15, :modifiers #{}}" :white :red]
+              [:move-cursor term 1 0]
               ; After pressing page down
               [:put-string term "Line 3\n"]
               [:put-string term "Last Line\n"]
-              [:put-string term "\n"]
-              [:move-cursor term 0 3]
-              [:put-string term "test.txt:4:2                            " :white :red]
+              [:move-cursor term 0 2]
+              [:put-string term "test.txt:3:2" :white :red]
               [:put-string term "Last key: {:key :page-down, :modifiers #{}}" :white :red]
-              [:move-cursor term 1 1]
+              [:move-cursor term 1 0]
               [:stop term]]
              @operations)))))
 
