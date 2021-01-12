@@ -11,14 +11,14 @@
 (def input-events (atom nil))
 (def last-key (atom nil))
 
-(defn get-terminal
+(defn- get-terminal
   "Creates a text terminal."
   []
   (let [factory (DefaultTerminalFactory.)]
     (.setForceTextTerminal factory true)
     (.createTerminal factory)))
 
-(defn add-resize-listener [terminal f]
+(defn- add-resize-listener [terminal f]
   "Sets the passed function as resize listener for the terminal.
    The passed function receives the new [w h] as vector."
   (let [listener (proxy [TerminalResizeListener] []
@@ -26,11 +26,11 @@
                      (f [(.getColumns new-size) (.getRows new-size)])))]
     (.addResizeListener terminal listener)))
 
-(defn start
+(defn- start
   "Start using terminal"
   [terminal] (.enterPrivateMode terminal))
 
-(defn stop
+(defn- stop
   "Stop using terminal"
   [terminal] (.exitPrivateMode terminal))
 
@@ -39,23 +39,23 @@
   [terminal] (let [terminal-size (.getTerminalSize terminal)]
                [(.getColumns terminal-size) (.getRows terminal-size)]))
 
-(defn move-cursor
+(defn- move-cursor
   "Move the cursor to x y"
   [terminal x y] (.setCursorPosition terminal x y))
 
-(defn clear
+(defn- clear
   "Clears the terminal and set cursor to [0 0]"
   [terminal]
   (get-size terminal) ; Get size because of performance  ???
   (.clearScreen terminal)
   (move-cursor terminal 0 0))
 
-(defn put-character
+(defn- put-character
   "Puts character at current terminal position"
   [terminal character]
   (.putCharacter terminal character))
 
-(defn flush-terminal [terminal]
+(defn- flush-terminal [terminal]
   (.flush terminal))
 
 (defn- parse-color [color-name]
@@ -64,16 +64,16 @@
     :default (TextColor$Indexed. 8)
     :white (TextColor$Indexed. 15)))
 
-(defn set-foreground-color [terminal color-name]
+(defn- set-foreground-color [terminal color-name]
   (.setForegroundColor terminal (parse-color color-name)))
 
-(defn set-background-color [terminal color-name]
+(defn- set-background-color [terminal color-name]
   (.setBackgroundColor terminal (parse-color color-name)))
 
-(defn reset-color-and-style [terminal]
+(defn- reset-color-and-style [terminal]
   (.resetColorAndSGR terminal))
 
-(defn put-string
+(defn- put-string
   "Puts string at the current terminal position"
   ([terminal string]
    (doseq [character string] (put-character terminal character)))
@@ -85,7 +85,7 @@
    (set-background-color terminal bg-color)
    (put-string terminal string fg-color)))
 
-(defn get-key-raw
+(defn- get-key-raw
   "Gets the raw Key object from the terminal"
   [terminal] (.pollInput terminal))
 
@@ -135,7 +135,7 @@
     (.isCtrlDown key) (conj :ctrl)
     (and (.isShiftDown key) (keyword? (parse-key key))) (conj :shift)))
 
-(defn get-key
+(defn- get-key
   [terminal]
   (let [key (get-key-raw terminal)]
     (if key
@@ -149,16 +149,6 @@
 
 (defn- emit-resize-event [size]
   (emit-input-event {:type :resize :payload size}))
-
-(defn init-terminal []
-  (reset! input-events clojure.lang.PersistentQueue/EMPTY)
-  (reset! last-key nil)
-  (let [terminal (get-terminal)]
-    (start terminal)
-    (add-resize-listener terminal
-                         (fn [size]
-                           (if (not= size [1 1]) (emit-resize-event size))))
-    terminal))
 
 (defn- render-two-part-status-bar [terminal editor left-content right-content]
   (let [[w _] (queries/get-size editor)
@@ -176,7 +166,7 @@
       (render-two-part-status-bar terminal editor position "COMMAND MODE")
       (render-two-part-status-bar terminal editor position (str "Last key: " @last-key)))))
 
-(defn render-editor-in-terminal [terminal editor]
+(defn- render-editor-in-terminal [terminal editor]
   (clear terminal)
   (doseq [line (queries/get-visible-lines editor)]
     (put-string terminal (str line \newline)))
@@ -186,7 +176,7 @@
     (move-cursor terminal (- x ox) (- y oy)))
   (flush-terminal terminal))
 
-(defn get-input-from-terminal [terminal]
+(defn- get-input-from-terminal [terminal]
   (while (not (peek @input-events))
     (let [key (get-key terminal)]
       (if key (emit-input-event key))))
@@ -194,6 +184,16 @@
     (if (contains? input-event :key) (reset! last-key input-event))
     (swap! input-events pop)
     input-event))
+
+(defn init-terminal []
+  (reset! input-events clojure.lang.PersistentQueue/EMPTY)
+  (reset! last-key nil)
+  (let [terminal (get-terminal)]
+    (start terminal)
+    (add-resize-listener terminal
+                         (fn [size]
+                           (if (not= size [1 1]) (emit-resize-event size))))
+    terminal))
 
 (extend-type Terminal ui/EditorUI
              (render-editor [terminal editor] (render-editor-in-terminal terminal editor))
