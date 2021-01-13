@@ -95,10 +95,6 @@
   (let [line (get-line line-no editor)]
     (replace-line line-no (f line) editor)))
 
-(deftransform update-current-line [f editor]
-  (let [[_ y] (get-cursor editor)]
-    (update-line y f editor)))
-
 (deftransform delete-character [[x y] editor]
   (let [lines-count (count (get-buffer editor))
         line (get-line y editor)
@@ -122,15 +118,17 @@
            (move-cursor-to deleted-position))
       editor)))
 
-(defn insert-newline-at-cursor [editor]
-  (let [[x _] (get-cursor editor)
-        current-line (get-current-line editor)
+(deftransform insert-newline [position editor]
+  (let [[x y] position
+        current-line (get-line y editor)
         before-cursor (subs current-line 0 x)
-        after-cursor (subs current-line x)
-        split-line-at-cursor (replace-current-line [before-cursor after-cursor])]
-    (-> editor
-        split-line-at-cursor
-        move-cursor-right)))
+        after-cursor (subs current-line x)]
+    (replace-line y [before-cursor after-cursor] editor)))
+
+(defn insert-newline-at-cursor [editor]
+  (->> editor
+       (insert-newline (get-cursor editor))
+       move-cursor-right))
 
 (def do-nothing identity)
 
@@ -146,10 +144,17 @@
 (defn save-file [editor]
   (save-file-to (get-path editor) editor))
 
+(deftransform insert-string [string position editor]
+  (let [[x y] position]
+    (update-line y #(str (subs % 0 x) string (subs % x)) editor)))
+
+(deftransform insert-character [character position editor]
+  (insert-string (str character) position editor))
+
 (deftransform insert-string-at-cursor [string editor]
   (let [[x y] (get-cursor editor)]
     (->> editor
-         (update-current-line #(str (subs % 0 x) string (subs % x)))
+         (insert-string string [x y])
          (move-cursor-to [(+ x (count string)) y]))))
 
 (deftransform insert-character-at-cursor [character editor]
@@ -163,13 +168,13 @@
          (clamp-offset))))
 
 (defn delete-until-end-of-line [editor]
-  (let [[x _] (get-cursor editor)]
-    (update-current-line #(subs % 0 x) editor)))
+  (let [[x y] (get-cursor editor)]
+    (update-line y #(subs % 0 x) editor)))
 
 (defn delete-from-beginning-of-line [editor]
   (let [[x y] (get-cursor editor)]
     (->> editor
-         (update-current-line #(subs % x))
+         (update-line y #(subs % x))
          (move-cursor-to [0 y]))))
 
 (defn duplicate-line [editor]
