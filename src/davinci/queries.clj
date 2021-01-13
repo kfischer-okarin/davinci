@@ -17,10 +17,13 @@
 
 (def get-size :size)
 
+(defn get-line [line-no editor]
+  (get (get-buffer editor) line-no))
+
 (defn get-line-relative-to-cursor [dy]
   (fn [editor]
     (let [[_ y] (get-cursor editor)]
-      (get (get-buffer editor) (+ y dy)))))
+      (get-line (+ y dy) editor))))
 
 (def get-previous-line
   (get-line-relative-to-cursor -1))

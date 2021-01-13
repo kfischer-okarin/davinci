@@ -82,29 +82,43 @@
         new-buffer (into [] cat [(take start buffer) new-lines-vector (drop end buffer)])]
     (set-buffer new-buffer editor)))
 
+(deftransform replace-line [line-no new-lines editor]
+  (replace-lines [line-no (inc line-no)] new-lines editor))
+
 (deftransform replace-current-line [new-lines editor]
   (let [[_ y] (get-cursor editor)]
-    (replace-lines [y (inc y)] new-lines editor)))
+    (replace-line y new-lines editor)))
+
+(deftransform update-line [line-no f editor]
+  (let [line (get-line line-no editor)]
+    (replace-line line-no (f line) editor)))
 
 (deftransform update-current-line [f editor]
-  (let [[_ y] (get-cursor editor)
-        current-line (get-current-line editor)]
-    (replace-lines [y (inc y)] (f current-line) editor)))
+  (let [[_ y] (get-cursor editor)]
+    (update-line y f editor)))
+
+(deftransform delete-character [[x y] editor]
+  (let [lines-count (count (get-buffer editor))
+        line (get-line y editor)
+        line-length (count line)]
+    (if (<= 0 y (dec lines-count))
+      (cond
+        (<= 0 x (dec line-length)) (update-line y #(str (subs % 0 x) (subs % (inc x))) editor)
+        (and (= x line-length) (< y (dec lines-count))) (let [next-line (get-line (inc y) editor)
+                                                              merged-with-next-line (str line next-line)]
+                                                          (replace-lines [y (+ y 2)] merged-with-next-line editor))
+        :else editor)
+      editor)))
 
 (defn delete-previous-character [editor]
-  (let [[x y] (get-cursor editor)]
-    (if (pos? x)
+  (let [[x y] (get-cursor editor)
+        deleted-position (cond (pos? x) [(dec x) y]
+                               (pos? y) [(count (get-previous-line editor)) (dec y)])]
+    (if deleted-position
       (->> editor
-           (update-current-line #(str (subs % 0 (dec x)) (subs % x)))
-           move-cursor-left)
-      (if (pos? y)
-        (let [previous-line (get-previous-line editor)
-              merged-with-previous-line (str previous-line (get-current-line editor))
-              merge-lines (replace-lines [(dec y) (inc y)] merged-with-previous-line)]
-          (->> editor
-               merge-lines
-               (move-cursor-to [(count previous-line) (dec y)])))
-        editor))))
+           (delete-character deleted-position)
+           (move-cursor-to deleted-position))
+      editor)))
 
 (defn insert-newline [editor]
   (let [[x _] (get-cursor editor)
