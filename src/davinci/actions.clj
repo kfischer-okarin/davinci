@@ -1,5 +1,6 @@
 (ns davinci.actions
-  (:require [davinci.queries :refer :all]))
+  (:require [clojure.string :as string]
+            [davinci.queries :refer :all]))
 
 (defmacro deftransform [name args & body]
   "Defines a parametrized transformation and automatically adds an partial arity which returns an 1-ary function which can be used
@@ -24,7 +25,8 @@
   (assoc editor :path path))
 
 (deftransform set-buffer-to-string [string editor]
-  (set-buffer (conj (clojure.string/split string #"\n") "") editor))
+  (let [lines (clojure.string/split string #"\n")]
+    (set-buffer (if (string/ends-with? string "\n") (conj lines "") lines) editor)))
 
 (deftransform set-offset [offset editor]
   (assoc editor :offset offset))
