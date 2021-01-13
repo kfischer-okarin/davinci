@@ -122,7 +122,7 @@
            (move-cursor-to deleted-position))
       editor)))
 
-(defn insert-newline [editor]
+(defn insert-newline-at-cursor [editor]
   (let [[x _] (get-cursor editor)
         current-line (get-current-line editor)
         before-cursor (subs current-line 0 x)
@@ -146,14 +146,14 @@
 (defn save-file [editor]
   (save-file-to (get-path editor) editor))
 
-(deftransform insert-string [string editor]
+(deftransform insert-string-at-cursor [string editor]
   (let [[x y] (get-cursor editor)]
     (->> editor
          (update-current-line #(str (subs % 0 x) string (subs % x)))
          (move-cursor-to [(+ x (count string)) y]))))
 
-(deftransform insert-character [character editor]
-  (insert-string (str character) editor))
+(deftransform insert-character-at-cursor [character editor]
+  (insert-string-at-cursor (str character) editor))
 
 (defn delete-line [editor]
   (let [line-count (get-line-count editor)]

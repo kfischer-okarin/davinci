@@ -67,8 +67,8 @@
    (add-key-binding :home move-cursor-to-beginning-of-line)
    (add-key-binding :end move-cursor-to-end-of-line)
    (add-key-binding :backspace delete-previous-character)
-   (add-key-binding :enter insert-newline)
-   (add-key-binding :tab (insert-string "  "))
+   (add-key-binding :enter insert-newline-at-cursor)
+   (add-key-binding :tab (insert-string-at-cursor "  "))
    (add-key-binding \x :ctrl (set-key-modifier :command-mode))
    (add-key-binding \x :command-mode (unset-key-modifier :command-mode))
    (add-key-binding \s :command-mode format-and-save)
@@ -76,7 +76,7 @@
    (add-key-binding \l :command-mode delete-until-end-of-line)
    (add-key-binding \j :command-mode delete-from-beginning-of-line)
    (add-key-binding \d :command-mode duplicate-line)
-   (set-character-handler insert-character)))
+   (set-character-handler insert-character-at-cursor)))
 
 ; TODO add execute command action
 (defn get-available-actions []

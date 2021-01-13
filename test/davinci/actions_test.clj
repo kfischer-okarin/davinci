@@ -157,20 +157,20 @@
         expected-next-editor (->> editor (set-cursor [3 0]))]
     (is (= expected-next-editor (move-cursor-left editor)))))
 
-(deftest test-insert-character
+(deftest test-insert-character-at-cursor
   (let [editor (->> editor/initial-state (set-buffer ["Abc" "Def"]) (set-cursor [1 1]))
         expected-next-editor (->> editor (set-buffer ["Abc" "Dtef"]) (set-cursor [2 1]))]
-    (is (= expected-next-editor (insert-character \t editor)))))
+    (is (= expected-next-editor (insert-character-at-cursor \t editor)))))
 
-(deftest test-insert-string
+(deftest test-insert-string-at-cursor
   (let [editor (->> editor/initial-state (set-buffer ["Abc" "Def"]) (set-cursor [1 1]))
         expected-next-editor (->> editor (set-buffer ["Abc" "Dxyzef"]) (set-cursor [4 1]))]
-    (is (= expected-next-editor (insert-string "xyz" editor)))))
+    (is (= expected-next-editor (insert-string-at-cursor "xyz" editor)))))
 
-(deftest test-insert-newline
+(deftest test-insert-newline-at-cursor
   (let [editor (->> editor/initial-state (set-buffer ["Abc" "Def"]) (set-cursor [2 1]))
         expected-next-editor (->> editor (set-buffer ["Abc" "De" "f"]) (set-cursor [0 2]))]
-    (is (= expected-next-editor (insert-newline editor)))))
+    (is (= expected-next-editor (insert-newline-at-cursor editor)))))
 
 (deftest test-page-down
   (let [editor (->> editor/initial-state
