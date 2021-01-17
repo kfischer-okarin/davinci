@@ -158,7 +158,7 @@
 (defn- render-status-bar [terminal editor]
   (let [[_ h] (queries/get-size editor)
         [x y] (queries/get-cursor editor)
-        position (str (queries/get-path editor) ":" (inc y) ":" (inc x))]
+        position (str (queries/get-buffer-path editor) ":" (inc y) ":" (inc x))]
     (move-cursor terminal 0 h)
     (if (contains? (:key-modifiers editor) :command-mode)
       (render-two-part-status-bar terminal editor position "COMMAND MODE")

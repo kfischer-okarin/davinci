@@ -15,78 +15,78 @@
 (deftest test-open-file
   (with-redefs [slurp (constantly "Line 1\nLine 2\n")]
     (let [editor editor/initial-state
-          expected-next-editor (->> editor (set-buffer ["Line 1" "Line 2" ""]) (set-path "abc"))]
+          expected-next-editor (->> editor (set-buffer-lines ["Line 1" "Line 2" ""]) (set-buffer-path "abc"))]
       (is (= expected-next-editor ((open-file "abc") editor))))))
 
 (deftest test-open-file-without-final-newline
   (with-redefs [slurp (constantly "Line 1\nLine 2")]
     (let [editor editor/initial-state
-          expected-next-editor (->> editor (set-buffer ["Line 1" "Line 2"]) (set-path "abc"))]
+          expected-next-editor (->> editor (set-buffer-lines ["Line 1" "Line 2"]) (set-buffer-path "abc"))]
       (is (= expected-next-editor ((open-file "abc") editor))))))
 
 (deftest test-save-file
   (let [output (atom nil)]
     (with-redefs [spit (fn [filename content] (reset! output [filename content]))]
-      (let [editor (->> editor/initial-state (set-buffer ["Line 1" "Line 2" ""]) (set-path "test.txt"))]
+      (let [editor (->> editor/initial-state (set-buffer-lines ["Line 1" "Line 2" ""]) (set-buffer-path "test.txt"))]
         (is (= editor (save-file editor)))
         (is (= ["test.txt" "Line 1\nLine 2\n"] @output))))))
 
 (deftest test-save-file-without-final-newline
   (let [output (atom nil)]
     (with-redefs [spit (fn [filename content] (reset! output [filename content]))]
-      (let [editor (->> editor/initial-state (set-buffer ["Line 1" "Line 2"]) (set-path "test.txt"))]
+      (let [editor (->> editor/initial-state (set-buffer-lines ["Line 1" "Line 2"]) (set-buffer-path "test.txt"))]
         (is (= editor (save-file editor)))
         (is (= ["test.txt" "Line 1\nLine 2"] @output))))))
 
 (deftest test-save-file-to
   (let [output (atom nil)]
     (with-redefs [spit (fn [filename content] (reset! output [filename content]))]
-      (let [editor (->> editor/initial-state (set-buffer ["Line 1" "Line 2" ""]))]
+      (let [editor (->> editor/initial-state (set-buffer-lines ["Line 1" "Line 2" ""]))]
         (is (= editor (save-file-to "new-file.txt" editor)))
         (is (= ["new-file.txt" "Line 1\nLine 2\n"] @output))))))
 
 (deftest test-replace-lines-with-lines
-  (let [editor (->> editor/initial-state (set-buffer ["Line 0" "Line 1" "Line 2" "Line 3"]))
-        expected-next-editor (->> editor (set-buffer ["Line 0" "New Line 0" "New Line 1" "New Line 2" "Line 3"]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 0" "Line 1" "Line 2" "Line 3"]))
+        expected-next-editor (->> editor (set-buffer-lines ["Line 0" "New Line 0" "New Line 1" "New Line 2" "Line 3"]))]
     (is (= expected-next-editor (replace-lines [1 3] ["New Line 0" "New Line 1" "New Line 2"] editor)))))
 
 (deftest test-replace-lines-with-string
-  (let [editor (->> editor/initial-state (set-buffer ["Line 0" "Line 1" "Line 2" "Line 3"]))
-        expected-next-editor (->> editor (set-buffer ["Line 0" "New Line" "Line 3"]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 0" "Line 1" "Line 2" "Line 3"]))
+        expected-next-editor (->> editor (set-buffer-lines ["Line 0" "New Line" "Line 3"]))]
     (is (= expected-next-editor (replace-lines [1 3] "New Line" editor)))))
 
 (deftest test-replace-current-line-with-lines
-  (let [editor (->> editor/initial-state (set-buffer ["Line 0" "Line 1" "Line 2"]) (set-cursor [0 1]))
-        expected-next-editor (->> editor (set-buffer ["Line 0" "New Line 1" "New Line 2" "Line 2"]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 0" "Line 1" "Line 2"]) (set-cursor [0 1]))
+        expected-next-editor (->> editor (set-buffer-lines ["Line 0" "New Line 1" "New Line 2" "Line 2"]))]
     (is (= expected-next-editor (replace-current-line ["New Line 1" "New Line 2"] editor)))))
 
 (deftest test-replace-current-line-with-string
-  (let [editor (->> editor/initial-state (set-buffer ["Line 0" "Line 1" "Line 2"]) (set-cursor [0 1]))
-        expected-next-editor (->> editor (set-buffer ["Line 0" "New Line" "Line 2"]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 0" "Line 1" "Line 2"]) (set-cursor [0 1]))
+        expected-next-editor (->> editor (set-buffer-lines ["Line 0" "New Line" "Line 2"]))]
     (is (= expected-next-editor (replace-current-line "New Line" editor)))))
 
 (deftest test-delete-previous-character
-  (let [editor (->> editor/initial-state (set-buffer ["This is some text" "Second line is nice"]) (set-cursor [11 0]))
-        expected-next-editor (->> editor (set-buffer ["This is soe text" "Second line is nice"]) (set-cursor [10 0]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["This is some text" "Second line is nice"]) (set-cursor [11 0]))
+        expected-next-editor (->> editor (set-buffer-lines ["This is soe text" "Second line is nice"]) (set-cursor [10 0]))]
     (is (= expected-next-editor (delete-previous-character editor)))))
 
 (deftest test-delete-previous-character-and-merge-line
-  (let [editor (->> editor/initial-state (set-buffer ["Abc" "def"]) (set-cursor [0 1]))
-        expected-next-editor (->> editor (set-buffer ["Abcdef"]) (set-cursor [3 0]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Abc" "def"]) (set-cursor [0 1]))
+        expected-next-editor (->> editor (set-buffer-lines ["Abcdef"]) (set-cursor [3 0]))]
     (is (= expected-next-editor (delete-previous-character editor)))))
 
 (deftest test-delete-previous-character-not-beyond-document
-  (let [editor (->> editor/initial-state (set-buffer ["Abc" "def"]) (set-cursor [0 0]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Abc" "def"]) (set-cursor [0 0]))]
     (is (= editor (delete-previous-character editor)))))
 
 (deftest test-move-cursor-up
-  (let [editor (->> editor/initial-state (set-buffer ["Abc" "Def"]) (set-cursor [2 1]))
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Abc" "Def"]) (set-cursor [2 1]))
         expected-next-editor (->> editor (set-cursor [2 0]))]
     (is (= expected-next-editor (move-cursor-up editor)))))
 
 (deftest test-move-cursor-up-scrolls-editor
   (let [editor (->> editor/initial-state
-                    (set-buffer ["Line 1" "Line 2" "Line 3"])
+                    (set-buffer-lines ["Line 1" "Line 2" "Line 3"])
                     (set-cursor [0 1])
                     (set-size [80 2])
                     (set-offset [0 1]))
@@ -96,22 +96,22 @@
     (is (= expected-next-editor (move-cursor-up editor)))))
 
 (deftest test-move-cursor-up-not-beyond-document
-  (let [editor (->> editor/initial-state (set-buffer ["This is some text" "Second line is nice"]) (set-cursor [5 0]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["This is some text" "Second line is nice"]) (set-cursor [5 0]))]
     (is (= editor (move-cursor-up editor)))))
 
 (deftest test-move-cursor-up-not-beyond-line
-  (let [editor (->> editor/initial-state (set-buffer ["Abc" "Loooooong line"]) (set-cursor [10 1]))
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Abc" "Loooooong line"]) (set-cursor [10 1]))
         expected-next-editor (->> editor (set-cursor [3 0]))]
     (is (= expected-next-editor (move-cursor-up editor)))))
 
 (deftest test-move-cursor-down
-  (let [editor (->> editor/initial-state (set-buffer ["Abc" "Def"]) (set-cursor [2 0]))
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Abc" "Def"]) (set-cursor [2 0]))
         expected-next-editor (->> editor (set-cursor [2 1]))]
     (is (= expected-next-editor (move-cursor-down editor)))))
 
 (deftest test-move-cursor-down-scrolls-editor
   (let [editor (->> editor/initial-state
-                    (set-buffer ["Line 1" "Line 2" "Line 3"])
+                    (set-buffer-lines ["Line 1" "Line 2" "Line 3"])
                     (set-cursor [0 1])
                     (set-size [80 2])
                     (set-offset [0 0]))
@@ -121,60 +121,60 @@
     (is (= expected-next-editor (move-cursor-down editor)))))
 
 (deftest test-move-cursor-down-not-beyond-document
-  (let [editor (->> editor/initial-state (set-buffer ["This is some text" "Second line is nice"]) (set-cursor [5 1]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["This is some text" "Second line is nice"]) (set-cursor [5 1]))]
     (is (= editor (move-cursor-down editor)))))
 
 (deftest test-move-cursor-down-not-beyond-line
-  (let [editor (->> editor/initial-state (set-buffer ["This is some text" "Short"]) (set-cursor [10 0]))
+  (let [editor (->> editor/initial-state (set-buffer-lines ["This is some text" "Short"]) (set-cursor [10 0]))
         expected-next-editor (->> editor (set-cursor [5 1]))]
     (is (= expected-next-editor (move-cursor-down editor)))))
 
 (deftest test-move-cursor-right
-  (let [editor (->> editor/initial-state (set-buffer ["Abc"]) (set-cursor [1 0]))
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Abc"]) (set-cursor [1 0]))
         expected-next-editor (->> editor (set-cursor [2 0]))]
     (is (= expected-next-editor (move-cursor-right editor)))))
 
 (deftest test-move-cursor-right-not-beyond-document
-  (let [editor (->> editor/initial-state (set-buffer  ["Abc"]) (set-cursor [3 0]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines  ["Abc"]) (set-cursor [3 0]))]
     (is (= editor (move-cursor-right editor)))))
 
 (deftest test-move-cursor-right-to-next-line
-  (let [editor (->> editor/initial-state (set-buffer ["Abc" "Def"]) (set-cursor [3 0]))
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Abc" "Def"]) (set-cursor [3 0]))
         expected-next-editor (->> editor (set-cursor [0 1]))]
     (is (= expected-next-editor (move-cursor-right editor)))))
 
 (deftest test-move-cursor-left
-  (let [editor (->> editor/initial-state (set-buffer ["Abc"]) (set-cursor [2 0]))
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Abc"]) (set-cursor [2 0]))
         expected-next-editor (->> editor (set-cursor [1 0]))]
     (is (= expected-next-editor (move-cursor-left editor)))))
 
 (deftest test-move-cursor-left-not-beyond-document
-  (let [editor (->> editor/initial-state (set-buffer ["Abc"]) (set-cursor [0 0]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Abc"]) (set-cursor [0 0]))]
     (is (= editor (move-cursor-left editor)))))
 
 (deftest test-move-cursor-left-to-previous-line
-  (let [editor (->> editor/initial-state (set-buffer  ["Abc" "Def"]) (set-cursor [0 1]))
+  (let [editor (->> editor/initial-state (set-buffer-lines  ["Abc" "Def"]) (set-cursor [0 1]))
         expected-next-editor (->> editor (set-cursor [3 0]))]
     (is (= expected-next-editor (move-cursor-left editor)))))
 
 (deftest test-insert-character-at-cursor
-  (let [editor (->> editor/initial-state (set-buffer ["Abc" "Def"]) (set-cursor [1 1]))
-        expected-next-editor (->> editor (set-buffer ["Abc" "Dtef"]) (set-cursor [2 1]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Abc" "Def"]) (set-cursor [1 1]))
+        expected-next-editor (->> editor (set-buffer-lines ["Abc" "Dtef"]) (set-cursor [2 1]))]
     (is (= expected-next-editor (insert-character-at-cursor \t editor)))))
 
 (deftest test-insert-string-at-cursor
-  (let [editor (->> editor/initial-state (set-buffer ["Abc" "Def"]) (set-cursor [1 1]))
-        expected-next-editor (->> editor (set-buffer ["Abc" "Dxyzef"]) (set-cursor [4 1]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Abc" "Def"]) (set-cursor [1 1]))
+        expected-next-editor (->> editor (set-buffer-lines ["Abc" "Dxyzef"]) (set-cursor [4 1]))]
     (is (= expected-next-editor (insert-string-at-cursor "xyz" editor)))))
 
 (deftest test-insert-newline-at-cursor
-  (let [editor (->> editor/initial-state (set-buffer ["Abc" "Def"]) (set-cursor [2 1]))
-        expected-next-editor (->> editor (set-buffer ["Abc" "De" "f"]) (set-cursor [0 2]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Abc" "Def"]) (set-cursor [2 1]))
+        expected-next-editor (->> editor (set-buffer-lines ["Abc" "De" "f"]) (set-cursor [0 2]))]
     (is (= expected-next-editor (insert-newline-at-cursor editor)))))
 
 (deftest test-page-down
   (let [editor (->> editor/initial-state
-                    (set-buffer ["Line 1" "Line 2" "Line 3" "Line 4"])
+                    (set-buffer-lines ["Line 1" "Line 2" "Line 3" "Line 4"])
                     (set-cursor [0 0])
                     (set-size [80 2])
                     (set-offset [0 0]))
@@ -185,7 +185,7 @@
 
 (deftest test-page-down-not-beyond-document
   (let [editor (->> editor/initial-state
-                    (set-buffer ["Line 1" "Line 2" "Line 3" "Line 4"])
+                    (set-buffer-lines ["Line 1" "Line 2" "Line 3" "Line 4"])
                     (set-cursor [0 2])
                     (set-size [80 2])
                     (set-offset [0 1]))
@@ -196,7 +196,7 @@
 
 (deftest test-page-down-not-beyond-line
   (let [editor (->> editor/initial-state
-                    (set-buffer ["Long Line 1" "Line 2" "Line 3" "Line 4"])
+                    (set-buffer-lines ["Long Line 1" "Line 2" "Line 3" "Line 4"])
                     (set-cursor [10 0])
                     (set-size [80 5])
                     (set-offset [0 0]))
@@ -205,7 +205,7 @@
 
 (deftest test-page-up
   (let [editor (->> editor/initial-state
-                    (set-buffer ["Line 1" "Line 2" "Line 3" "Line 4"])
+                    (set-buffer-lines ["Line 1" "Line 2" "Line 3" "Line 4"])
                     (set-cursor [0 3])
                     (set-size [80 2])
                     (set-offset [0 2]))
@@ -216,7 +216,7 @@
 
 (deftest test-page-up-not-beyond-document
   (let [editor (->> editor/initial-state
-                    (set-buffer ["Line 1" "Line 2" "Line 3" "Line 4"])
+                    (set-buffer-lines ["Line 1" "Line 2" "Line 3" "Line 4"])
                     (set-cursor [0 2])
                     (set-size [80 2])
                     (set-offset [0 1]))
@@ -227,7 +227,7 @@
 
 (deftest test-page-up-not-beyond-line
   (let [editor (->> editor/initial-state
-                    (set-buffer ["Line 1" "Line 2" "Line 3" "Long Line 4"])
+                    (set-buffer-lines ["Line 1" "Line 2" "Line 3" "Long Line 4"])
                     (set-cursor [10 3])
                     (set-size [80 5])
                     (set-offset [0 0]))
@@ -235,63 +235,63 @@
     (is (= expected-next-editor (page-up editor)))))
 
 (deftest test-move-cursor-to-beginning-of-line
-  (let [editor (->> editor/initial-state (set-buffer ["Abc"]) (set-cursor [2 0]))
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Abc"]) (set-cursor [2 0]))
         expected-next-editor (->> editor (set-cursor [0 0]))]
     (is (= expected-next-editor (move-cursor-to-beginning-of-line editor)))))
 
 (deftest test-move-cursor-to-end-of-line
-  (let [editor (->> editor/initial-state (set-buffer ["Abc"]) (set-cursor [1 0]))
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Abc"]) (set-cursor [1 0]))
         expected-next-editor (->> editor (set-cursor [3 0]))]
     (is (= expected-next-editor (move-cursor-to-end-of-line editor)))))
 
 (deftest test-delete-line
-  (let [editor (->> editor/initial-state (set-buffer ["Line 1" "Line 2" "Line 3"]) (set-cursor [1 1]))
-        expected-next-editor (->> editor (set-buffer ["Line 1" "Line 3"]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 1" "Line 2" "Line 3"]) (set-cursor [1 1]))
+        expected-next-editor (->> editor (set-buffer-lines ["Line 1" "Line 3"]))]
     (is (= expected-next-editor (delete-line editor)))))
 
 (deftest test-delete-line-only-line
-  (let [editor (->> editor/initial-state (set-buffer ["Line 1"]) (set-cursor [0 0]))
-        expected-next-editor (->> editor (set-buffer [""]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 1"]) (set-cursor [0 0]))
+        expected-next-editor (->> editor (set-buffer-lines [""]))]
     (is (= expected-next-editor (delete-line editor)))))
 
 (deftest test-delete-line-and-fix-x-position
-  (let [editor (->> editor/initial-state (set-buffer ["Line 1" "Loooooong Line 2" "Line 3"]) (set-cursor [10 1]))
-        expected-next-editor (->> editor (set-buffer ["Line 1" "Line 3"]) (set-cursor [6 1]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 1" "Loooooong Line 2" "Line 3"]) (set-cursor [10 1]))
+        expected-next-editor (->> editor (set-buffer-lines ["Line 1" "Line 3"]) (set-cursor [6 1]))]
     (is (= expected-next-editor (delete-line editor)))))
 
 (deftest test-delete-line-last-line
-  (let [editor (->> editor/initial-state (set-buffer ["Line 1" "Line 2" ""]) (set-cursor [0 2]))
-        expected-next-editor (->> editor (set-buffer ["Line 1" "Line 2"]) (set-cursor [0 1]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 1" "Line 2" ""]) (set-cursor [0 2]))
+        expected-next-editor (->> editor (set-buffer-lines ["Line 1" "Line 2"]) (set-cursor [0 1]))]
     (is (= expected-next-editor (delete-line editor)))))
 
 (deftest test-delete-line-last-visible-line
-  (let [editor (->> editor/initial-state (set-buffer ["Line 1" "Line 2" "Line 3"]) (set-cursor [0 2]) (set-offset [0 2]))
-        expected-next-editor (->> editor (set-buffer ["Line 1" "Line 2"]) (set-cursor [0 1]) (set-offset [0 1]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 1" "Line 2" "Line 3"]) (set-cursor [0 2]) (set-offset [0 2]))
+        expected-next-editor (->> editor (set-buffer-lines ["Line 1" "Line 2"]) (set-cursor [0 1]) (set-offset [0 1]))]
     (is (= expected-next-editor (delete-line editor)))))
 
 (deftest test-delete-until-end-of-line
-  (let [editor (->> editor/initial-state (set-buffer ["Line 1" "Line 2"]) (set-cursor [3 1]))
-        expected-next-editor (->> editor (set-buffer ["Line 1" "Lin"]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 1" "Line 2"]) (set-cursor [3 1]))
+        expected-next-editor (->> editor (set-buffer-lines ["Line 1" "Lin"]))]
     (is (= expected-next-editor (delete-until-end-of-line editor)))))
 
 (deftest test-delete-from-beginning-of-line
-  (let [editor (->> editor/initial-state (set-buffer ["Line 1" "Line 2"]) (set-cursor [3 1]))
-        expected-next-editor (->> editor (set-buffer ["Line 1" "e 2"]) (set-cursor [0 1]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 1" "Line 2"]) (set-cursor [3 1]))
+        expected-next-editor (->> editor (set-buffer-lines ["Line 1" "e 2"]) (set-cursor [0 1]))]
     (is (= expected-next-editor (delete-from-beginning-of-line editor)))))
 
 (deftest test-duplicate-line
-  (let [editor (->> editor/initial-state (set-buffer ["Line 1" "Line 2"]) (set-cursor [2 1]))
-        expected-next-editor (->> editor (set-buffer ["Line 1" "Line 2" "Line 2"]) (set-cursor [2 2]))]
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 1" "Line 2"]) (set-cursor [2 1]))
+        expected-next-editor (->> editor (set-buffer-lines ["Line 1" "Line 2" "Line 2"]) (set-cursor [2 2]))]
     (is (= expected-next-editor (duplicate-line editor)))))
 
 (deftest test-set-size
-  (let [editor (->> editor/initial-state (set-buffer ["Line 1" "Line 2" "Line 3" "Line 4"]) (set-size [80 2]))
+  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 1" "Line 2" "Line 3" "Line 4"]) (set-size [80 2]))
         expected-next-editor (->> editor (set-size [80 4]))]
     (is (= expected-next-editor (set-size [80 4] editor)))))
 
 (deftest test-set-size-beyond-document-end
   (let [editor (->> editor/initial-state
-                    (set-buffer ["Line 1" "Line 2" "Line 3" "Line 4"])
+                    (set-buffer-lines ["Line 1" "Line 2" "Line 3" "Line 4"])
                     (set-cursor [0 2])
                     (set-size [80 2])
                     (set-offset [0 2]))
@@ -302,7 +302,7 @@
 
 (deftest test-set-size-bigger-than-document
   (let [editor (->> editor/initial-state
-                    (set-buffer ["Line 1" "Line 2" "Line 3" "Line 4"])
+                    (set-buffer-lines ["Line 1" "Line 2" "Line 3" "Line 4"])
                     (set-cursor [0 2])
                     (set-size [80 2])
                     (set-offset [0 2]))

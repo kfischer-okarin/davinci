@@ -18,15 +18,15 @@
 (deftransform set-cursor [cursor editor]
   (assoc editor :cursor cursor))
 
-(deftransform set-buffer [buffer editor]
-  (assoc editor :buffer buffer))
+(deftransform set-buffer-lines [lines editor]
+  (assoc editor :buffer lines))
 
-(deftransform set-path [path editor]
+(deftransform set-buffer-path [path editor]
   (assoc editor :path path))
 
-(deftransform set-buffer-to-string [string editor]
+(deftransform set-buffer-lines-to-string [string editor]
   (let [lines (clojure.string/split string #"\n")]
-    (set-buffer (if (string/ends-with? string "\n") (conj lines "") lines) editor)))
+    (set-buffer-lines (if (string/ends-with? string "\n") (conj lines "") lines) editor)))
 
 (deftransform set-offset [offset editor]
   (assoc editor :offset offset))
@@ -52,7 +52,7 @@
 (defn- clamp-cursor [editor]
   (let [[x y] (get-cursor editor)
         fixed-y (min (get-max-y editor) (max 0 y))
-        line-length (count (get (get-buffer editor) fixed-y))
+        line-length (count (get (get-buffer-lines editor) fixed-y))
         fixed-x (min line-length x)]
     (set-cursor [fixed-x fixed-y] editor)))
 
@@ -79,10 +79,10 @@
   (move-cursor-to (get-position-down-of-cursor editor) editor))
 
 (deftransform replace-lines [[start end] new-lines editor]
-  (let [buffer (get-buffer editor)
+  (let [lines (get-buffer-lines editor)
         new-lines-vector (if (vector? new-lines) new-lines (vector new-lines))
-        new-buffer (into [] cat [(take start buffer) new-lines-vector (drop end buffer)])]
-    (set-buffer new-buffer editor)))
+        new-buffer (into [] cat [(take start lines) new-lines-vector (drop end lines)])]
+    (set-buffer-lines new-buffer editor)))
 
 (deftransform replace-line [line-no new-lines editor]
   (replace-lines [line-no (inc line-no)] new-lines editor))
@@ -96,7 +96,7 @@
     (replace-line line-no (f line) editor)))
 
 (deftransform delete-character [[x y] editor]
-  (let [lines-count (count (get-buffer editor))
+  (let [lines-count (count (get-buffer-lines editor))
         line (get-line y editor)
         line-length (count line)]
     (if (<= 0 y (dec lines-count))
@@ -134,15 +134,15 @@
 
 (deftransform open-file [filename editor]
   (->> editor
-       (set-buffer-to-string (slurp filename))
-       (set-path filename)))
+       (set-buffer-lines-to-string (slurp filename))
+       (set-buffer-path filename)))
 
 (deftransform save-file-to [filename editor]
-  (spit filename (get-buffer-as-string editor))
+  (spit filename (get-buffer-lines-as-string editor))
   editor)
 
 (defn save-file [editor]
-  (save-file-to (get-path editor) editor))
+  (save-file-to (get-buffer-path editor) editor))
 
 (deftransform insert-string [string position editor]
   (let [[x y] position]

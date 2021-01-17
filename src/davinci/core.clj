@@ -39,14 +39,14 @@
   Pass command to execute as argument array replacing the filename with the keyword :filename.
   Example: (format-with-command-taking-file \"rubocop\" \"-A\" :filename)"
   (fn [editor]
-    (spit (queries/get-path editor) (queries/get-buffer-as-string editor))
-    (apply sh (replace {:filename (queries/get-path editor)} args))
-    ((set-buffer-to-string (slurp (queries/get-path editor))) editor)))
+    (spit (queries/get-buffer-path editor) (queries/get-buffer-lines-as-string editor))
+    (apply sh (replace {:filename (queries/get-buffer-path editor)} args))
+    ((set-buffer-lines-to-string (slurp (queries/get-buffer-path editor))) editor)))
 
 (defn format-buffer [editor]
   (cond
-    (string/ends-with? (queries/get-path editor) ".rb") ((format-with-command-taking-file "rubocop" "-A" :filename) editor)
-    (string/ends-with? (queries/get-path editor) ".clj") ((format-with-command-taking-file "lein" "cljfmt" "fix" :filename) editor)
+    (string/ends-with? (queries/get-buffer-path editor) ".rb") ((format-with-command-taking-file "rubocop" "-A" :filename) editor)
+    (string/ends-with? (queries/get-buffer-path editor) ".clj") ((format-with-command-taking-file "lein" "cljfmt" "fix" :filename) editor)
     :else editor))
 
 (defn format-and-save [editor]
