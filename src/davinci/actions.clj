@@ -26,11 +26,6 @@
     (assoc-in editor [:buffer :lines] lines)
     (set-buffer lines nil editor)))
 
-(deftransform set-buffer-path [path editor]
-  (if (:buffer editor)
-    (assoc-in editor [:buffer :path] path)
-    (set-buffer [] path editor)))
-
 (deftransform set-offset [offset editor]
   (assoc editor :offset offset))
 

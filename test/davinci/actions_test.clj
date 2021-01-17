@@ -15,26 +15,28 @@
 (deftest test-open-file
   (with-redefs [slurp (constantly "Line 1\nLine 2\n")]
     (let [editor editor/initial-state
-          expected-next-editor (->> editor (set-buffer-lines ["Line 1" "Line 2" ""]) (set-buffer-path "abc"))]
-      (is (= expected-next-editor ((open-file "abc") editor))))))
+          next-editor (open-file "abc" editor)]
+      (is (= ["Line 1" "Line 2" ""] (get-buffer-lines next-editor)))
+      (is (= "abc" (get-buffer-path next-editor))))))
 
 (deftest test-open-file-without-final-newline
   (with-redefs [slurp (constantly "Line 1\nLine 2")]
     (let [editor editor/initial-state
-          expected-next-editor (->> editor (set-buffer-lines ["Line 1" "Line 2"]) (set-buffer-path "abc"))]
-      (is (= expected-next-editor ((open-file "abc") editor))))))
+          next-editor (open-file "abc" editor)]
+      (is (= ["Line 1" "Line 2"] (get-buffer-lines next-editor)))
+      (is (= "abc" (get-buffer-path next-editor))))))
 
 (deftest test-save-file
   (let [output (atom nil)]
     (with-redefs [spit (fn [filename content] (reset! output [filename content]))]
-      (let [editor (->> editor/initial-state (set-buffer-lines ["Line 1" "Line 2" ""]) (set-buffer-path "test.txt"))]
+      (let [editor (->> editor/initial-state (set-buffer ["Line 1" "Line 2" ""] "test.txt"))]
         (is (= editor (save-file editor)))
         (is (= ["test.txt" "Line 1\nLine 2\n"] @output))))))
 
 (deftest test-save-file-without-final-newline
   (let [output (atom nil)]
     (with-redefs [spit (fn [filename content] (reset! output [filename content]))]
-      (let [editor (->> editor/initial-state (set-buffer-lines ["Line 1" "Line 2"]) (set-buffer-path "test.txt"))]
+      (let [editor (->> editor/initial-state (set-buffer ["Line 1" "Line 2"] "test.txt"))]
         (is (= editor (save-file editor)))
         (is (= ["test.txt" "Line 1\nLine 2"] @output))))))
 
