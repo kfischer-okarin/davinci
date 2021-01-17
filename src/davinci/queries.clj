@@ -6,12 +6,14 @@
 
 (def get-cursor :cursor)
 
-(def get-buffer-lines :buffer)
+(defn get-buffer-lines [editor]
+  (get-in editor [:buffer :lines]))
 
 (defn get-buffer-lines-as-string [editor]
   (string/join "\n" (get-buffer-lines editor)))
 
-(def get-buffer-path :path)
+(defn get-buffer-path [editor]
+  (get-in editor [:buffer :path]))
 
 (def get-offset :offset)
 

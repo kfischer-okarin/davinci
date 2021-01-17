@@ -1,10 +1,11 @@
 (ns davinci.editor
   (:require [clojure.set :as set]))
 
-(defrecord EditorState [buffer path cursor size offset key-bindings key-modifiers character-handlers running])
+(defrecord Buffer [lines path])
 
-(def initial-state (->EditorState []       ; buffer
-                                  nil      ; path
+(defrecord EditorState [buffer cursor size offset key-bindings key-modifiers character-handlers running])
+
+(def initial-state (->EditorState nil      ; buffer
                                   [0 0]    ; cursor
                                   [80 24]  ; size
                                   [0 0]    ; offset
