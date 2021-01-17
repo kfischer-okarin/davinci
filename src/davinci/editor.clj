@@ -1,15 +1,18 @@
 (ns davinci.editor
   (:require [clojure.set :as set]))
 
-(def initial-state {:buffer []
-                    :path nil
-                    :cursor [0 0]
-                    :size [80 24]
-                    :offset [0 0]
-                    :key-bindings {}
-                    :key-modifiers #{}
-                    :character-handlers {} ; active-modifiers -> handler
-                    :running true})
+(defrecord EditorState [buffer path cursor size offset key-bindings key-modifiers character-handlers running])
+
+(def initial-state (->EditorState []       ; buffer
+                                  nil      ; path
+                                  [0 0]    ; cursor
+                                  [80 24]  ; size
+                                  [0 0]    ; offset
+                                  {}       ; key-bindings
+                                  #{}      ; key-modifiers
+                                  {}       ; character-handlers (active-modifiers -> handler)
+                                  true     ; running
+                                  ))
 
 (defn- with-constant-modifiers [editor key]
   (update key :modifiers #(set/union % (:key-modifiers editor))))
