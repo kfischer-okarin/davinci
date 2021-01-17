@@ -1,5 +1,6 @@
 (ns davinci.editor
-  (:require [clojure.set :as set]))
+  (:require [clojure.string :as string]
+            [clojure.set :as set]))
 
 (defrecord Buffer [lines path])
 
@@ -14,6 +15,12 @@
                                   {}       ; character-handlers (active-modifiers -> handler)
                                   true     ; running
                                   ))
+
+(defn split-into-lines [string]
+  (let [lines (clojure.string/split string #"\n")]
+    (if (string/ends-with? string "\n")
+      (conj lines "")
+      lines)))
 
 (defn- with-constant-modifiers [editor key]
   (update key :modifiers #(set/union % (:key-modifiers editor))))

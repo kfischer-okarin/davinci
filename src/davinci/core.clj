@@ -41,7 +41,7 @@
   (fn [editor]
     (spit (queries/get-buffer-path editor) (queries/get-buffer-lines-as-string editor))
     (apply sh (replace {:filename (queries/get-buffer-path editor)} args))
-    ((set-buffer-lines-to-string (slurp (queries/get-buffer-path editor))) editor)))
+    (set-buffer-lines (e/split-into-lines (slurp (queries/get-buffer-path editor))) editor)))
 
 (defn format-buffer [editor]
   (cond

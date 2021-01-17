@@ -1,6 +1,5 @@
 (ns davinci.actions
-  (:require [clojure.string :as string]
-            [davinci.editor :refer [->Buffer]]
+  (:require [davinci.editor :refer [->Buffer split-into-lines]]
             [davinci.queries :refer :all]))
 
 (defmacro deftransform [name args & body]
@@ -19,19 +18,18 @@
 (deftransform set-cursor [cursor editor]
   (assoc editor :cursor cursor))
 
+(deftransform set-buffer [lines path editor]
+  (assoc editor :buffer (->Buffer lines path)))
+
 (deftransform set-buffer-lines [lines editor]
   (if (:buffer editor)
     (assoc-in editor [:buffer :lines] lines)
-    (assoc editor :buffer (->Buffer lines nil))))
+    (set-buffer lines nil editor)))
 
 (deftransform set-buffer-path [path editor]
   (if (:buffer editor)
     (assoc-in editor [:buffer :path] path)
-    (assoc editor :buffer (->Buffer [] path))))
-
-(deftransform set-buffer-lines-to-string [string editor]
-  (let [lines (clojure.string/split string #"\n")]
-    (set-buffer-lines (if (string/ends-with? string "\n") (conj lines "") lines) editor)))
+    (set-buffer [] path editor)))
 
 (deftransform set-offset [offset editor]
   (assoc editor :offset offset))
@@ -138,9 +136,7 @@
 (def do-nothing identity)
 
 (deftransform open-file [filename editor]
-  (->> editor
-       (set-buffer-lines-to-string (slurp filename))
-       (set-buffer-path filename)))
+  (set-buffer (split-into-lines (slurp filename)) filename editor))
 
 (deftransform save-file-to [filename editor]
   (spit filename (get-buffer-lines-as-string editor))
