@@ -6,6 +6,13 @@
 
 (defn editor-with [values] (merge editor/initial-state values))
 
+(defmacro with-file-read-mock [optional-file-content & body]
+  (let [content-given? (string? optional-file-content)
+        file-content (if content-given? optional-file-content "")
+        actual-body (if content-given? body (into [optional-file-content] body))]
+    `(with-redefs [slurp (constantly ~file-content)]
+       ~@actual-body)))
+
 (deftest test-quit-editor
   (let [editor editor/initial-state]
     (do
@@ -13,14 +20,14 @@
       (is (not (is-running (quit-editor editor)))))))
 
 (deftest test-open-file
-  (with-redefs [slurp (constantly "Line 1\nLine 2\n")]
+  (with-file-read-mock "Line 1\nLine 2\n"
     (let [editor editor/initial-state
           next-editor (open-file "abc" editor)]
       (is (= ["Line 1" "Line 2" ""] (get-buffer-lines next-editor)))
       (is (= "abc" (get-buffer-path next-editor))))))
 
 (deftest test-open-file-without-final-newline
-  (with-redefs [slurp (constantly "Line 1\nLine 2")]
+  (with-file-read-mock "Line 1\nLine 2"
     (let [editor editor/initial-state
           next-editor (open-file "abc" editor)]
       (is (= ["Line 1" "Line 2"] (get-buffer-lines next-editor)))
