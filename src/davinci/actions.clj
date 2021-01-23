@@ -19,7 +19,18 @@
   (assoc editor :cursor cursor))
 
 (deftransform set-buffer [lines path editor]
-  (assoc editor :buffer (->Buffer lines path)))
+  (assoc editor :buffer (->Buffer lines path nil)))
+
+(deftransform set-buffer-type [type editor]
+  (assoc-in editor [:buffer :type] type))
+
+(defn detect-buffer-type [editor]
+  (let [path (get-buffer-path editor)
+        matching-rules (filter (fn [[matcher _]] (re-find matcher path)) (:file-type-matchers editor))
+        first-matching-rule (first matching-rules)]
+    (if first-matching-rule
+      (set-buffer-type (second first-matching-rule) editor)
+      editor)))
 
 (deftransform set-buffer-lines [lines editor]
   (if (:buffer editor)
@@ -131,7 +142,9 @@
 (def do-nothing identity)
 
 (deftransform open-file [filename editor]
-  (set-buffer (split-into-lines (slurp filename)) filename editor))
+  (->> editor
+       (set-buffer (split-into-lines (slurp filename)) filename)
+       detect-buffer-type))
 
 (deftransform save-file-to [filename editor]
   (spit filename (get-buffer-lines-as-string editor))
@@ -232,3 +245,6 @@
 (defn unset-character-handler [& modifiers]
   (fn [editor]
     (update editor :character-handlers #(dissoc % (set modifiers)))))
+
+(deftransform recognize-file-type [file-type matcher editor]
+  (update editor :file-type-matchers #(conj % [matcher file-type])))

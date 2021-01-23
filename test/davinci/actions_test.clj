@@ -33,6 +33,18 @@
       (is (= ["Line 1" "Line 2"] (get-buffer-lines next-editor)))
       (is (= "abc" (get-buffer-path next-editor))))))
 
+(deftest open-file-with-file-type-parser-test
+  (with-file-read-mock
+    (let [editor (->> editor/initial-state (recognize-file-type :text #"\.txt\Z"))
+          next-editor (open-file "abc.txt" editor)]
+      (is (= :text (get-buffer-type next-editor))))))
+
+(deftest last-file-type-parser-wins-test
+  (with-file-read-mock
+    (let [editor (->> editor/initial-state (recognize-file-type :text #"\.txt\Z") (recognize-file-type :nottext #"\.txt\Z"))
+          next-editor (open-file "abc.txt" editor)]
+      (is (= :nottext (get-buffer-type next-editor))))))
+
 (deftest test-save-file
   (let [output (atom nil)]
     (with-redefs [spit (fn [filename content] (reset! output [filename content]))]

@@ -15,6 +15,9 @@
 (defn get-buffer-path [editor]
   (get-in editor [:buffer :path]))
 
+(defn get-buffer-type [editor]
+  (get-in editor [:buffer :type]))
+
 (def get-offset :offset)
 
 (def get-size :size)
