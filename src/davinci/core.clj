@@ -13,21 +13,19 @@
 (def last-key (atom nil))
 (def temp-file (atom nil))
 
-(defn execute-action [action]
-  (swap! editor action))
-
-(defn execute-actions [& actions]
-  (doseq [action actions] (execute-action action)))
+(defn execute [& commands]
+  (doseq [command commands]
+    (swap! editor command)))
 
 (defn set-editor-size [[ui-w ui-h]]
-  (execute-action (set-size [ui-w (dec ui-h)])))
+  (execute (set-size [ui-w (dec ui-h)])))
 
 (defn handle-key [key]
   (let [action (or
                 (e/get-action-for-key @editor key)
                 (e/get-character-handler-action-for-key @editor key)
                 do-nothing)]
-    (execute-action action)))
+    (execute action)))
 
 (defn handle-input [input]
   (cond
@@ -56,7 +54,7 @@
 
 (defn init-keybindings
   []
-  (execute-actions
+  (execute
    (add-key-binding \w :ctrl quit-editor)
    (add-key-binding :up move-cursor-up)
    (add-key-binding :right move-cursor-right)
@@ -96,7 +94,7 @@
    (reset! editor e/initial-state)
    (init-keybindings)
    (reset! temp-file (s/get-tempfile))
-   (execute-action (open-file filename))
+   (execute (open-file filename))
    (let [terminal (init-terminal)]
      (try
        (while (queries/is-running @editor)
