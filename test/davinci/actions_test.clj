@@ -6,13 +6,6 @@
 
 (defn editor-with [values] (merge editor/initial-state values))
 
-(defmacro with-file-read-mock [optional-file-content & body]
-  (let [content-given? (string? optional-file-content)
-        file-content (if content-given? optional-file-content "")
-        actual-body (if content-given? body (into [optional-file-content] body))]
-    `(with-redefs [slurp (constantly ~file-content)]
-       ~@actual-body)))
-
 (deftest test-quit-editor
   (let [editor editor/initial-state]
     (do
@@ -20,27 +13,27 @@
       (is (not (is-running (quit-editor editor)))))))
 
 (deftest test-open-file
-  (with-file-read-mock "Line 1\nLine 2\n"
+  (with-redefs [slurp (constantly "Line 1\nLine 2\n")]
     (let [editor editor/initial-state
           next-editor (open-file "abc" editor)]
       (is (= ["Line 1" "Line 2" ""] (get-buffer-lines next-editor)))
       (is (= "abc" (get-buffer-path next-editor))))))
 
 (deftest test-open-file-without-final-newline
-  (with-file-read-mock "Line 1\nLine 2"
+  (with-redefs [slurp (constantly "Line 1\nLine 2")]
     (let [editor editor/initial-state
           next-editor (open-file "abc" editor)]
       (is (= ["Line 1" "Line 2"] (get-buffer-lines next-editor)))
       (is (= "abc" (get-buffer-path next-editor))))))
 
 (deftest open-file-with-file-type-parser-test
-  (with-file-read-mock
+  (with-redefs [slurp (constantly "")]
     (let [editor (->> editor/initial-state (recognize-file-type :text #"\.txt\Z"))
           next-editor (open-file "abc.txt" editor)]
       (is (= :text (get-buffer-type next-editor))))))
 
 (deftest last-file-type-parser-wins-test
-  (with-file-read-mock
+  (with-redefs [slurp (constantly "")]
     (let [editor (->> editor/initial-state (recognize-file-type :text #"\.txt\Z") (recognize-file-type :nottext #"\.txt\Z"))
           next-editor (open-file "abc.txt" editor)]
       (is (= :nottext (get-buffer-type next-editor))))))
