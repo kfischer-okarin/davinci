@@ -1,6 +1,7 @@
 (ns davinci.core
   (:require [clojure.string :as string]
             [clojure.java.shell :refer [sh]]
+            [environ.core :refer [env]]
             [davinci.actions :refer :all]
             [davinci.editor :as e]
             [davinci.queries :as queries]
@@ -16,6 +17,10 @@
 (defn execute [& commands]
   (doseq [command commands]
     (swap! editor command)))
+
+(defn load-config-file [filename]
+  (binding [*ns* (find-ns 'davinci.core)]
+    (apply execute (eval (s/read-all filename)))))
 
 (defn set-editor-size [[ui-w ui-h]]
   (execute (set-size [ui-w (dec ui-h)])))
@@ -52,29 +57,8 @@
       (format-buffer)
       (save-file)))
 
-(defn init-keybindings
-  []
-  (execute
-   (add-key-binding \w :ctrl quit-editor)
-   (add-key-binding :up move-cursor-up)
-   (add-key-binding :right move-cursor-right)
-   (add-key-binding :left move-cursor-left)
-   (add-key-binding :down move-cursor-down)
-   (add-key-binding :page-up page-up)
-   (add-key-binding :page-down page-down)
-   (add-key-binding :home move-cursor-to-beginning-of-line)
-   (add-key-binding :end move-cursor-to-end-of-line)
-   (add-key-binding :backspace delete-previous-character)
-   (add-key-binding :enter insert-newline-at-cursor)
-   (add-key-binding :tab (insert-string-at-cursor "  "))
-   (add-key-binding \x :ctrl (set-key-modifier :command-mode))
-   (add-key-binding \x :command-mode (unset-key-modifier :command-mode))
-   (add-key-binding \s :command-mode format-and-save)
-   (add-key-binding \k :command-mode delete-line)
-   (add-key-binding \l :command-mode delete-until-end-of-line)
-   (add-key-binding \j :command-mode delete-from-beginning-of-line)
-   (add-key-binding \d :command-mode duplicate-line)
-   (set-character-handler insert-character-at-cursor)))
+(defn load-config []
+  (load-config-file (str (env :davinci-path) "/default_config.clj")))
 
 ; TODO add execute command action
 (defn get-available-actions []
@@ -92,7 +76,7 @@
   ([] (println "No args"))
   ([filename]
    (reset! editor e/initial-state)
-   (init-keybindings)
+   (load-config)
    (reset! temp-file (s/get-tempfile))
    (execute (open-file filename))
    (let [terminal (init-terminal)]
