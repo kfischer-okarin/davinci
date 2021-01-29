@@ -1,5 +1,5 @@
 (ns davinci.queries
-  (:require [clojure.string :as string]))
+  (:require [davinci.lines :as lines]))
 
 (defn is-running [editor]
   (:running editor))
@@ -8,9 +8,6 @@
 
 (defn get-buffer-lines [editor]
   (get-in editor [:buffer :lines]))
-
-(defn get-buffer-lines-as-string [editor]
-  (string/join "\n" (get-buffer-lines editor)))
 
 (defn get-buffer-path [editor]
   (get-in editor [:buffer :path]))
@@ -22,70 +19,46 @@
 
 (def get-size :size)
 
-(defn get-line [line-no editor]
-  (get (get-buffer-lines editor) line-no))
-
-(defn get-line-relative-to-cursor [dy]
-  (fn [editor]
-    (let [[_ y] (get-cursor editor)]
-      (get-line (+ y dy) editor))))
-
-(def get-previous-line
-  (get-line-relative-to-cursor -1))
-
-(def get-current-line
-  (get-line-relative-to-cursor 0))
-
-(def get-next-line
-  (get-line-relative-to-cursor 1))
-
-(defn get-line-count [editor]
-  (count (get-buffer-lines editor)))
-
-(defn get-max-y [editor]
-  (dec (get-line-count editor)))
-
 (defn get-max-y-offset [editor]
   (let [[w h] (get-size editor)]
-    (max (- (get-line-count editor) h) 0)))
+    (max (- (count (get-buffer-lines editor)) h) 0)))
 
 (defn get-visible-lines [editor]
   (let [[_ h] (get-size editor)
         [_ oy] (get-offset editor)]
-    (subvec (get-buffer-lines editor) oy (min (+ oy h) (get-line-count editor)))))
+    (subvec (get-buffer-lines editor) oy (min (+ oy h) (count (get-buffer-lines editor))))))
 
 (defn get-position-left-of-cursor [editor]
-  (let [[x y] (get-cursor editor)]
+  (let [[x y] (get-cursor editor)
+        lines (get-buffer-lines editor)]
     (if (pos? x)
       [(dec x) y]
-      (let [previous-line (get-previous-line editor)]
-        (if previous-line
-          [(count previous-line) (dec y)]
-          [x y])))))
+      (if (pos? y)
+        [(lines/get-length lines (dec y)) (dec y)]
+        [x y]))))
 
 (defn get-position-right-of-cursor [editor]
   (let [[x y] (get-cursor editor)
-        current-line (get-current-line editor)
-        current-line-length (count current-line)]
+        lines (get-buffer-lines editor)
+        current-line-length (lines/get-length lines y)]
     (if (< x current-line-length)
       [(inc x) y]
-      (let [next-line (get-next-line editor)]
-        (if next-line
-          [0 (inc y)]
-          [x y])))))
+      (if (< y (lines/max-y lines))
+        [0 (inc y)]
+        [x y]))))
 
 (defn get-position-up-of-cursor [editor]
   (let [[x y] (get-cursor editor)
-        previous-line (get-previous-line editor)]
-    (if-not previous-line
-      [x y]
-      (let [previous-line-length (count previous-line)]
-        [(min previous-line-length x) (dec y)]))))
+        lines (get-buffer-lines editor)]
+    (if (> y 0)
+      (let [previous-line-length (lines/get-length lines (dec y))]
+        [(min previous-line-length x) (dec y)])
+      [x y])))
 
 (defn get-position-down-of-cursor [editor]
   (let [[x y] (get-cursor editor)
-        next-line (get-next-line editor)]
-    (if-not next-line
-      [x y]
-      (let [next-line-length (count next-line)]
-        [(min next-line-length x) (inc y)]))))
+        lines (get-buffer-lines editor)]
+    (if (< y (lines/max-y lines))
+      (let [next-line-length (lines/get-length lines (inc y))]
+        [(min next-line-length x) (inc y)])
+      [x y])))

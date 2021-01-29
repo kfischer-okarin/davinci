@@ -17,12 +17,6 @@
                                   true     ; running
                                   ))
 
-(defn split-into-lines [string]
-  (let [lines (clojure.string/split string #"\n")]
-    (if (string/ends-with? string "\n")
-      (conj lines "")
-      lines)))
-
 (defn- with-constant-modifiers [editor key]
   (update key :modifiers #(set/union % (:key-modifiers editor))))
 

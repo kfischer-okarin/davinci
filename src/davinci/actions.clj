@@ -1,5 +1,6 @@
 (ns davinci.actions
-  (:require [davinci.editor :refer [->Buffer split-into-lines]]
+  (:require [davinci.editor :refer [->Buffer]]
+            [davinci.lines :as lines]
             [davinci.queries :refer :all]))
 
 (defmacro deftransform [name args & body]
@@ -60,14 +61,16 @@
 
 (defn- clamp-cursor [editor]
   (let [[x y] (get-cursor editor)
-        fixed-y (min (get-max-y editor) (max 0 y))
-        line-length (count (get (get-buffer-lines editor) fixed-y))
+        lines (get-buffer-lines editor)
+        fixed-y (min (lines/max-y lines) (max 0 y))
+        line-length (lines/get-length (get-buffer-lines editor) fixed-y)
         fixed-x (min line-length x)]
     (set-cursor [fixed-x fixed-y] editor)))
 
 (defn- clamp-offset [editor]
-  (let [[ox oy] (get-offset editor)]
-    (set-offset [ox (min (get-max-y editor) oy)] editor)))
+  (let [[ox oy] (get-offset editor)
+        lines (get-buffer-lines editor)]
+    (set-offset [ox (min (lines/max-y lines) oy)] editor)))
 
 (deftransform move-cursor-to [position editor]
   (->> editor
@@ -101,26 +104,29 @@
     (replace-line y new-lines editor)))
 
 (deftransform update-line [line-no f editor]
-  (let [line (get-line line-no editor)]
+  (let [lines (get-buffer-lines editor)
+        line (lines/get-line lines line-no)]
     (replace-line line-no (f line) editor)))
 
 (deftransform delete-character [[x y] editor]
-  (let [lines-count (count (get-buffer-lines editor))
-        line (get-line y editor)
-        line-length (count line)]
-    (if (<= 0 y (dec lines-count))
+  (let [lines (get-buffer-lines editor)
+        max-y (lines/max-y lines)
+        line (lines/get-line lines y)
+        line-length (lines/get-length lines y)]
+    (if (< y max-y)
       (cond
         (<= 0 x (dec line-length)) (update-line y #(str (subs % 0 x) (subs % (inc x))) editor)
-        (and (= x line-length) (< y (dec lines-count))) (let [next-line (get-line (inc y) editor)
-                                                              merged-with-next-line (str line next-line)]
-                                                          (replace-lines [y (+ y 2)] merged-with-next-line editor))
+        (and (= x line-length) (< y max-y)) (let [next-line (lines/get-line lines (inc y))
+                                                  merged-with-next-line (str line next-line)]
+                                              (replace-lines [y (+ y 2)] merged-with-next-line editor))
         :else editor)
       editor)))
 
 (defn delete-previous-character [editor]
   (let [[x y] (get-cursor editor)
+        lines (get-buffer-lines editor)
         deleted-position (cond (pos? x) [(dec x) y]
-                               (pos? y) [(count (get-previous-line editor)) (dec y)])]
+                               (pos? y) [(lines/get-length lines (dec y)) (dec y)])]
     (if deleted-position
       (->> editor
            (delete-character deleted-position)
@@ -129,7 +135,8 @@
 
 (deftransform insert-newline [position editor]
   (let [[x y] position
-        current-line (get-line y editor)
+        lines (get-buffer-lines editor)
+        current-line (lines/get-line lines y)
         before-cursor (subs current-line 0 x)
         after-cursor (subs current-line x)]
     (replace-line y [before-cursor after-cursor] editor)))
@@ -143,11 +150,11 @@
 
 (deftransform open-file [filename editor]
   (->> editor
-       (set-buffer (split-into-lines (slurp filename)) filename)
+       (set-buffer (lines/->lines (slurp filename)) filename)
        detect-buffer-type))
 
 (deftransform save-file-to [filename editor]
-  (spit filename (get-buffer-lines-as-string editor))
+  (spit filename (lines/->string (get-buffer-lines editor)))
   editor)
 
 (defn save-file [editor]
@@ -170,7 +177,7 @@
   (insert-string-at-cursor (str character) editor))
 
 (defn delete-line [editor]
-  (let [line-count (get-line-count editor)]
+  (let [line-count (count (get-buffer-lines editor))]
     (->> editor
          (replace-current-line (if (> line-count 1) [] ""))
          clamp-cursor
@@ -187,7 +194,9 @@
          (move-cursor-to [0 y]))))
 
 (defn duplicate-line [editor]
-  (let [current-line (get-current-line editor)]
+  (let [[_ y] (get-cursor editor)
+        lines (get-buffer-lines editor)
+        current-line (lines/get-line lines y)]
     (->> editor
          (replace-current-line [current-line current-line])
          move-cursor-down)))
@@ -215,8 +224,9 @@
     (move-cursor-to [0 y] editor)))
 
 (defn move-cursor-to-end-of-line [editor]
-  (let [[x y] (get-cursor editor)]
-    (move-cursor-to [(count (get-current-line editor)) y] editor)))
+  (let [[x y] (get-cursor editor)
+        lines (get-buffer-lines editor)]
+    (move-cursor-to [(lines/get-length lines y) y] editor)))
 
 (defn set-key-modifier [modifier]
   (fn [editor]

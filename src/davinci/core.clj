@@ -4,6 +4,7 @@
             [environ.core :refer [env]]
             [davinci.actions :refer :all]
             [davinci.editor :as e]
+            [davinci.lines :as lines]
             [davinci.queries :as queries]
             [davinci.system :as s]
             [davinci.terminal :as t]
@@ -42,9 +43,9 @@
   Pass command to execute as argument array replacing the filename with the keyword :filename.
   Example: (format-with-command-taking-file \"rubocop\" \"-A\" :filename)"
   (fn [editor]
-    (spit (queries/get-buffer-path editor) (queries/get-buffer-lines-as-string editor))
+    (spit (queries/get-buffer-path editor) (lines/->string (queries/get-buffer-lines editor)))
     (apply sh (replace {:filename (queries/get-buffer-path editor)} args))
-    (set-buffer-lines (e/split-into-lines (slurp (queries/get-buffer-path editor))) editor)))
+    (set-buffer-lines (lines/->lines (slurp (queries/get-buffer-path editor))) editor)))
 
 (defn format-buffer [editor]
   (cond
