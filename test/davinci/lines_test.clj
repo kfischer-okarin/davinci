@@ -2,17 +2,15 @@
   (:require [clojure.test :refer :all]
             [davinci.lines :refer :all]))
 
-(deftest ->string-with-final-newline-test
-  (is (= "Line 1\nLine 2\n" (->string ["Line 1" "Line 2" ""]))))
+(deftest ->string-test
+  (are [string lines] (= string (->string lines))
+    "Line 1\nLine 2\n" ["Line 1" "Line 2" ""]
+    "Line 1\nLine 2" ["Line 1" "Line 2"]))
 
-(deftest ->string-without-final-newline-test
-  (is (= "Line 1\nLine 2" (->string ["Line 1" "Line 2"]))))
-
-(deftest ->lines-with-final-newline-test
-  (is (=  ["Line 1" "Line 2" ""] (->lines "Line 1\nLine 2\n"))))
-
-(deftest ->lines-without-final-newline-test
-  (is (=  ["Line 1" "Line 2"] (->lines "Line 1\nLine 2"))))
+(deftest ->lines-test
+  (are [lines string] (= lines (->lines string))
+    ["Line 1" "Line 2" ""] "Line 1\nLine 2\n"
+    ["Line 1" "Line 2"] "Line 1\nLine 2"))
 
 (deftest get-line-test
   (is (= "Line 3" (get-line ["Line 1" "Loong Line 2" "Line 3"] 2))))
@@ -30,49 +28,29 @@
   (is (= ["Line 2" "Line 3" "Line 4"] (get-lines ["Line 1" "Line 2" "Line 3" "Line 4"] 1))))
 
 (deftest position-right-of-test
-  (let [lines ["Line 1" "Long Line 2" "Line 3"]]
-    (is (= [5 1] (position-right-of lines [4 1])))))
-
-(deftest position-right-of-across-lines-test
-  (let [lines ["Line 1" "Long Line 2" "Line 3"]]
-    (is (= [0 1] (position-right-of lines [6 0])))))
-
-(deftest position-right-at-end-of-document-test
-  (let [lines ["Line 1" "Long Line 2" "Line 3"]]
-    (is (= nil (position-right-of lines [6 2])))))
+  (let [lines ["Line 1" "Line 2" "Line 3"]]
+    (are [new-position position] (= new-position (position-right-of lines position))
+      [5 1] [4 1]
+      [0 1] [6 0]
+      nil [6 2])))
 
 (deftest position-left-of-test
-  (let [lines ["Line 1" "Long Line 2"]]
-    (is (= [3 1] (position-left-of lines [4 1])))))
-
-(deftest position-left-of-across-lines-test
-  (let [lines ["Line 1" "Long Line 2"]]
-    (is (= [6 0] (position-left-of lines [0 1])))))
-
-(deftest position-left-at-beginning-of-document-test
-  (let [lines ["Line 1"]]
-    (is (= nil (position-left-of lines [0 0])))))
+  (let [lines ["Line 1" "Line 2" "Line 3"]]
+    (are [new-position position] (= new-position (position-left-of lines position))
+      [3 1] [4 1]
+      [6 0] [0 1]
+      nil [0 0])))
 
 (deftest position-up-of-test
   (let [lines ["Line 1" "Long Line 2"]]
-    (is (= [4 0] (position-up-of lines [4 1])))))
-
-(deftest position-up-of-with-shorter-linetest
-  (let [lines ["Line 1" "Long Line 2"]]
-    (is (= [6 0] (position-up-of lines [8 1])))))
-
-(deftest position-up-at-beginning-of-document-linetest
-  (let [lines ["Line 1" "Long Line 2"]]
-    (is (= nil (position-up-of lines [3 0])))))
+    (are [new-position position] (= new-position (position-up-of lines position))
+      [4 0] [4 1]
+      [6 0] [8 1]
+      nil [3 0])))
 
 (deftest position-down-of-test
-  (let [lines ["Line 1" "Long Line 2"]]
-    (is (= [4 1] (position-down-of lines [4 0])))))
-
-(deftest position-down-of-with-shorter-linetest
   (let [lines ["Long Line 1" "Line 2"]]
-    (is (= [6 1] (position-down-of lines [8 0])))))
-
-(deftest position-down-at-end-of-document-linetest
-  (let [lines ["Line 1" "Long Line 2"]]
-    (is (= nil (position-down-of lines [4 1])))))
+    (are [new-position position] (= new-position (position-down-of lines position))
+      [4 1] [4 0]
+      [6 1] [8 0]
+      nil [3 1])))
