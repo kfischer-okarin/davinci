@@ -59,26 +59,6 @@
         (is (= editor (save-file-to "new-file.txt" editor)))
         (is (= ["new-file.txt" "Line 1\nLine 2\n"] @output))))))
 
-(deftest test-replace-lines-with-lines
-  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 0" "Line 1" "Line 2" "Line 3"]))
-        expected-next-editor (->> editor (set-buffer-lines ["Line 0" "New Line 0" "New Line 1" "New Line 2" "Line 3"]))]
-    (is (= expected-next-editor (replace-lines [1 3] ["New Line 0" "New Line 1" "New Line 2"] editor)))))
-
-(deftest test-replace-lines-with-string
-  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 0" "Line 1" "Line 2" "Line 3"]))
-        expected-next-editor (->> editor (set-buffer-lines ["Line 0" "New Line" "Line 3"]))]
-    (is (= expected-next-editor (replace-lines [1 3] "New Line" editor)))))
-
-(deftest test-replace-current-line-with-lines
-  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 0" "Line 1" "Line 2"]) (set-cursor [0 1]))
-        expected-next-editor (->> editor (set-buffer-lines ["Line 0" "New Line 1" "New Line 2" "Line 2"]))]
-    (is (= expected-next-editor (replace-current-line ["New Line 1" "New Line 2"] editor)))))
-
-(deftest test-replace-current-line-with-string
-  (let [editor (->> editor/initial-state (set-buffer-lines ["Line 0" "Line 1" "Line 2"]) (set-cursor [0 1]))
-        expected-next-editor (->> editor (set-buffer-lines ["Line 0" "New Line" "Line 2"]))]
-    (is (= expected-next-editor (replace-current-line "New Line" editor)))))
-
 (deftest test-delete-previous-character
   (let [editor (->> editor/initial-state (set-buffer-lines ["This is some text" "Second line is nice"]) (set-cursor [11 0]))
         expected-next-editor (->> editor (set-buffer-lines ["This is soe text" "Second line is nice"]) (set-cursor [10 0]))]
@@ -175,11 +155,6 @@
   (let [editor (->> editor/initial-state (set-buffer-lines ["Abc" "Def"]) (set-cursor [1 1]))
         expected-next-editor (->> editor (set-buffer-lines ["Abc" "Dtef"]) (set-cursor [2 1]))]
     (is (= expected-next-editor (insert-character-at-cursor \t editor)))))
-
-(deftest test-insert-string-at-cursor
-  (let [editor (->> editor/initial-state (set-buffer-lines ["Abc" "Def"]) (set-cursor [1 1]))
-        expected-next-editor (->> editor (set-buffer-lines ["Abc" "Dxyzef"]) (set-cursor [4 1]))]
-    (is (= expected-next-editor (insert-string-at-cursor "xyz" editor)))))
 
 (deftest test-insert-newline-at-cursor
   (let [editor (->> editor/initial-state (set-buffer-lines ["Abc" "Def"]) (set-cursor [2 1]))

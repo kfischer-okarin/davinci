@@ -53,3 +53,36 @@
   (let [clamped-y (clamp y 0 (max-y lines))
         clamped-x (clamp x 0 (get-length lines clamped-y))]
     [clamped-x clamped-y]))
+
+(defn replace-lines [lines start end replacement]
+  (let [until-start (get-lines lines 0 start)
+        after-end (get-lines lines end)]
+    (into until-start cat [replacement after-end])))
+
+(defn replace-line [lines line-no replacement]
+  (replace-lines lines line-no (inc line-no) [replacement]))
+
+(defn update-line [lines line-no f]
+  (replace-line lines line-no (f (get-line lines line-no))))
+
+(defn insert-string [lines [x y] s]
+  (let [line (get-line lines y)
+        before-position (subs line 0 x)
+        after-position (subs line x)]
+    (replace-line lines y (str before-position s after-position))))
+
+(defn insert-character [lines position c]
+  (insert-string lines position (str c)))
+
+(defn insert-newline [lines [x y]]
+  (let [line (get-line lines y)
+        before-position (subs line 0 x)
+        after-position (subs line x)]
+    (replace-lines lines y (inc y) [before-position after-position])))
+
+(defn delete-character [lines [x y]]
+  (let [line-length (get-length lines y)]
+    (if (< x line-length)
+      (update-line lines y #(str (subs % 0 x) (subs % (inc x))))
+      (let [merged-line (str (get-line lines y) (get-line lines (inc y)))]
+        (replace-lines lines y (+ y 2) [merged-line])))))

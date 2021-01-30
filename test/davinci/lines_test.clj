@@ -64,3 +64,38 @@
       [3 1] [3 4]
       [6 0] [10 -4]
       [0 1] [-20 10])))
+
+(deftest replace-lines-test
+  (let [lines ["Line 1" "Line 2" "Line 3"]]
+    (are [new-lines start end replacement] (= new-lines (replace-lines lines start end replacement))
+      ["Line 1" "New Line 2-1" "New Line 2-2" "Line 3"] 1 2 ["New Line 2-1" "New Line 2-2"]
+      ["New Line 1-1" "New Line 1-2" "Line 3"] 0 2 ["New Line 1-1" "New Line 1-2"]
+      ["New Line"] 0 3 ["New Line"])))
+
+(deftest replace-line-test
+  (let [lines ["Line 1" "Line 2" "Line 3"]]
+    (is (= ["Line 1" "New Line 2" "Line 3"] (replace-line lines 1 "New Line 2")))))
+
+(deftest update-line-test
+  (let [lines ["Line 1" "Line 2" "Line 3"]]
+    (is (= ["Line 1" "Line 2Line 2" "Line 3"] (update-line lines 1 #(str % %))))))
+
+(deftest insert-newline-test
+  (let [lines ["Line 1"]]
+    (are [new-lines position] (= new-lines (insert-newline lines position))
+      ["Lin" "e 1"] [3 0]
+      ["Line 1" ""] [6 0])))
+
+(deftest delete-character-test
+  (let [lines ["Line 1" "Line 2"]]
+    (are [new-lines position] (= new-lines (delete-character lines position))
+      ["Lin 1" "Line 2"] [3 0]
+      ["Line 1Line 2"] [6 0])))
+
+(deftest insert-string-test
+  (let [lines ["Line 1" "Line 2"]]
+    (is (= ["Line 1" "LiSTRINGne 2"] (insert-string lines [2 1] "STRING")))))
+
+(deftest insert-character-test
+  (let [lines ["Line 1" "Line 2"]]
+    (is (= ["Line 1" "LiAne 2"] (insert-character lines [2 1] \A)))))
