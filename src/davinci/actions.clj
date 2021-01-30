@@ -60,12 +60,9 @@
       :else editor)))
 
 (defn- clamp-cursor [editor]
-  (let [[x y] (get-cursor editor)
-        lines (get-buffer-lines editor)
-        fixed-y (min (lines/max-y lines) (max 0 y))
-        line-length (-> editor get-buffer-lines (lines/get-length fixed-y))
-        fixed-x (min line-length x)]
-    (set-cursor [fixed-x fixed-y] editor)))
+  (let [cursor (get-cursor editor)
+        lines (get-buffer-lines editor)]
+    (set-cursor (lines/clamp-position lines cursor) editor)))
 
 (defn- clamp-offset [editor]
   (let [[ox oy] (get-offset editor)
@@ -209,8 +206,7 @@
 
 (defn duplicate-line [editor]
   (let [[_ y] (get-cursor editor)
-        lines (get-buffer-lines editor)
-        current-line (lines/get-line lines y)]
+        current-line (-> editor get-buffer-lines (lines/get-line y))]
     (->> editor
          (replace-current-line [current-line current-line])
          move-cursor-down)))

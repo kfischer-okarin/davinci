@@ -54,3 +54,13 @@
       [4 1] [4 0]
       [6 1] [8 0]
       nil [3 1])))
+
+(deftest clamp-position-test
+  (let [lines ["Line 1" "Line 2"]]
+    (are [clamped-position position] (= clamped-position (clamp-position lines position))
+      [6 0] [8 0]
+      [0 0] [-1 0]
+      [3 0] [3 -1]
+      [3 1] [3 4]
+      [6 0] [10 -4]
+      [0 1] [-20 10])))

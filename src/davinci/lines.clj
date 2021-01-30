@@ -45,3 +45,11 @@
     (let [next-y (inc y)
           next-line-length (get-length lines next-y)]
       [(min x next-line-length) (inc y)])))
+
+(defn- clamp [x lower-bound upper-bound]
+  (max (min x upper-bound) lower-bound))
+
+(defn clamp-position [lines [x y]]
+  (let [clamped-y (clamp y 0 (max-y lines))
+        clamped-x (clamp x 0 (get-length lines clamped-y))]
+    [clamped-x clamped-y]))
