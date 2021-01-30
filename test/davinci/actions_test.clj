@@ -359,3 +359,15 @@
   (let [editor (editor-with {:character-handlers {#{:mode-x :ctrl} do-nothing}})
         expected-next-editor (merge editor {:character-handlers {}})]
     (is (= ((unset-character-handler :mode-x :ctrl) editor) expected-next-editor))))
+
+(deftest execute-command-without-args-test
+  (let [editor (-> editor/initial-state (set-buffer-lines-new ["Line 1"]))
+        command-f (fn [editor] (set-buffer-lines-new editor ["Different" "Lines"]))
+        updated-editor (-> editor (execute-command command-f))]
+    (is (= ["Different" "Lines"] (get-buffer-lines updated-editor)))))
+
+(deftest execute-command-with-args-test
+  (let [editor (-> editor/initial-state (set-buffer-lines-new ["Line 1"]))
+        command-f (fn [editor new-lines] (set-buffer-lines-new editor new-lines))
+        updated-editor (-> editor (execute-command (list command-f ["Different" "Lines"])))]
+    (is (= ["Different" "Lines"] (get-buffer-lines updated-editor)))))

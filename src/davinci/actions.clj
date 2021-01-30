@@ -36,10 +36,11 @@
       (set-buffer-type (second first-matching-rule) editor)
       editor)))
 
+(defn set-buffer-lines-new [editor lines]
+  (assoc-in editor [:buffer :lines] lines))
+
 (deftransform set-buffer-lines [lines editor]
-  (if (:buffer editor)
-    (assoc-in editor [:buffer :lines] lines)
-    (set-buffer lines nil editor)))
+  (set-buffer-lines-new editor lines))
 
 (deftransform set-offset [offset editor]
   (assoc editor :offset offset))
@@ -218,3 +219,10 @@
 
 (deftransform recognize-file-type [file-type matcher editor]
   (update editor :file-type-matchers #(conj % [matcher file-type])))
+
+(defn execute-command [editor command]
+  (if (list? command)
+    (let [command-f (peek command)
+          command-args (pop command)]
+      (eval (conj command-args editor command-f)))
+    (command editor)))

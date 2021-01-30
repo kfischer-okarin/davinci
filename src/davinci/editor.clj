@@ -6,15 +6,15 @@
 
 (defrecord EditorState [buffer cursor size offset key-bindings key-modifiers character-handlers file-type-matchers running])
 
-(def initial-state (->EditorState nil      ; buffer
-                                  [0 0]    ; cursor
-                                  [80 24]  ; size
-                                  [0 0]    ; offset
-                                  {}       ; key-bindings
-                                  #{}      ; key-modifiers
-                                  {}       ; character-handlers (active-modifiers -> handler)
-                                  '()      ; file-type-matchers
-                                  true     ; running
+(def initial-state (->EditorState (->Buffer [] nil nil)  ; buffer
+                                  [0 0]                  ; cursor
+                                  [80 24]                ; size
+                                  [0 0]                  ; offset
+                                  {}                     ; key-bindings
+                                  #{}                    ; key-modifiers
+                                  {}                     ; character-handlers (active-modifiers -> handler)
+                                  '()                    ; file-type-matchers
+                                  true                   ; running
                                   ))
 
 (defn- with-constant-modifiers [editor key]
