@@ -63,7 +63,7 @@
   (let [[x y] (get-cursor editor)
         lines (get-buffer-lines editor)
         fixed-y (min (lines/max-y lines) (max 0 y))
-        line-length (lines/get-length (get-buffer-lines editor) fixed-y)
+        line-length (-> editor get-buffer-lines (lines/get-length fixed-y))
         fixed-x (min line-length x)]
     (set-cursor [fixed-x fixed-y] editor)))
 
@@ -75,20 +75,25 @@
 (deftransform move-cursor-to [position editor]
   (->> editor
        (set-cursor position)
-       scroll-to-cursor
-       clamp-cursor))
+       scroll-to-cursor))
+
+(defn- update-cursor-in-bounds [editor f]
+  (let [cursor (get-cursor editor)]
+    (if-let [new-position (-> editor get-buffer-lines (f cursor))]
+      (move-cursor-to new-position editor)
+      editor)))
 
 (defn move-cursor-left [editor]
-  (move-cursor-to (get-position-left-of-cursor editor) editor))
+  (update-cursor-in-bounds editor lines/position-left-of))
 
 (defn move-cursor-right [editor]
-  (move-cursor-to (get-position-right-of-cursor editor) editor))
+  (update-cursor-in-bounds editor lines/position-right-of))
 
 (defn move-cursor-up [editor]
-  (move-cursor-to (get-position-up-of-cursor editor) editor))
+  (update-cursor-in-bounds editor lines/position-up-of))
 
 (defn move-cursor-down [editor]
-  (move-cursor-to (get-position-down-of-cursor editor) editor))
+  (update-cursor-in-bounds editor lines/position-down-of))
 
 (deftransform replace-lines [[start end] new-lines editor]
   (let [lines (get-buffer-lines editor)
@@ -176,6 +181,15 @@
 (deftransform insert-character-at-cursor [character editor]
   (insert-string-at-cursor (str character) editor))
 
+(defn move-cursor-to-beginning-of-line [editor]
+  (let [[_ y] (get-cursor editor)]
+    (move-cursor-to [0 y] editor)))
+
+(defn move-cursor-to-end-of-line [editor]
+  (let [[_ y] (get-cursor editor)
+        new-x (-> editor get-buffer-lines (lines/get-length y))]
+    (move-cursor-to [new-x y] editor)))
+
 (defn delete-line [editor]
   (let [line-count (count (get-buffer-lines editor))]
     (->> editor
@@ -191,7 +205,7 @@
   (let [[x y] (get-cursor editor)]
     (->> editor
          (update-line y #(subs % x))
-         (move-cursor-to [0 y]))))
+         move-cursor-to-beginning-of-line)))
 
 (defn duplicate-line [editor]
   (let [[_ y] (get-cursor editor)
@@ -218,15 +232,6 @@
          (set-cursor [x (- y h)])
          clamp-cursor
          (set-offset [ox (max (- oy h) 0)]))))
-
-(defn move-cursor-to-beginning-of-line [editor]
-  (let [[x y] (get-cursor editor)]
-    (move-cursor-to [0 y] editor)))
-
-(defn move-cursor-to-end-of-line [editor]
-  (let [[x y] (get-cursor editor)
-        lines (get-buffer-lines editor)]
-    (move-cursor-to [(lines/get-length lines y) y] editor)))
 
 (defn set-key-modifier [modifier]
   (fn [editor]

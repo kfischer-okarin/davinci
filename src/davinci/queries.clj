@@ -25,40 +25,6 @@
 
 (defn get-visible-lines [editor]
   (let [[_ h] (get-size editor)
-        [_ oy] (get-offset editor)]
-    (subvec (get-buffer-lines editor) oy (min (+ oy h) (count (get-buffer-lines editor))))))
-
-(defn get-position-left-of-cursor [editor]
-  (let [[x y] (get-cursor editor)
-        lines (get-buffer-lines editor)]
-    (if (pos? x)
-      [(dec x) y]
-      (if (pos? y)
-        [(lines/get-length lines (dec y)) (dec y)]
-        [x y]))))
-
-(defn get-position-right-of-cursor [editor]
-  (let [[x y] (get-cursor editor)
-        lines (get-buffer-lines editor)
-        current-line-length (lines/get-length lines y)]
-    (if (< x current-line-length)
-      [(inc x) y]
-      (if (< y (lines/max-y lines))
-        [0 (inc y)]
-        [x y]))))
-
-(defn get-position-up-of-cursor [editor]
-  (let [[x y] (get-cursor editor)
-        lines (get-buffer-lines editor)]
-    (if (> y 0)
-      (let [previous-line-length (lines/get-length lines (dec y))]
-        [(min previous-line-length x) (dec y)])
-      [x y])))
-
-(defn get-position-down-of-cursor [editor]
-  (let [[x y] (get-cursor editor)
-        lines (get-buffer-lines editor)]
-    (if (< y (lines/max-y lines))
-      (let [next-line-length (lines/get-length lines (inc y))]
-        [(min next-line-length x) (inc y)])
-      [x y])))
+        [_ oy] (get-offset editor)
+        lines-count (min (+ oy h) (count (get-buffer-lines editor)))]
+    (lines/get-lines (get-buffer-lines editor) oy lines-count)))
