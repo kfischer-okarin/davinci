@@ -1,8 +1,23 @@
 (ns davinci.lines
-  (:require [clojure.string :as string]))
+  (:require  [clojure.spec.alpha :as s]
+             [clojure.spec.gen.alpha :as gen]
+             [clojure.string :as string]))
+
+(s/def ::lines (s/coll-of string? :kind vector? :min-count 1))
+
+(defn- valid-line-no? [conformed-args]
+  (s/int-in-range? 0 (count (:lines conformed-args)) (:line-no conformed-args)))
+
+(s/fdef ->string
+  :args (s/cat :lines ::lines)
+  :ret string?)
 
 (defn ->string [lines]
   (string/join "\n" lines))
+
+(s/fdef ->lines
+  :args (s/cat :string string?)
+  :ret ::lines)
 
 (defn ->lines [string]
   (let [lines (string/split string #"\n")]
@@ -10,8 +25,16 @@
       (conj lines "")
       lines)))
 
+(s/fdef get-line
+  :args (s/& (s/cat :lines ::lines :line-no nat-int?) valid-line-no?)
+  :ret string?)
+
 (defn get-line [lines line-no]
   (nth lines line-no))
+
+(s/fdef get-length
+  :args (s/& (s/cat :lines ::lines :line-no nat-int?) valid-line-no?)
+  :ret nat-int?)
 
 (defn get-length [lines line-no]
   (count (get-line lines line-no)))

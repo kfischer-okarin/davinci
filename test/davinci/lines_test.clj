@@ -1,6 +1,12 @@
 (ns davinci.lines-test
   (:require [clojure.test :refer :all]
+            [clojure.spec.test.alpha :as stest]
             [davinci.lines :refer :all]))
+
+(deftest spec-tests
+  (let [options {:clojure.spec.test.check/opts {:num-tests 100}}
+        test-results (map stest/abbrev-result (stest/check (stest/checkable-syms) options))]
+    (is (not-any? :failure test-results))))
 
 (deftest ->string-test
   (are [string lines] (= string (->string lines))
@@ -10,7 +16,8 @@
 (deftest ->lines-test
   (are [lines string] (= lines (->lines string))
     ["Line 1" "Line 2" ""] "Line 1\nLine 2\n"
-    ["Line 1" "Line 2"] "Line 1\nLine 2"))
+    ["Line 1" "Line 2"] "Line 1\nLine 2"
+    [""] ""))
 
 (deftest get-line-test
   (is (= "Line 3" (get-line ["Line 1" "Loong Line 2" "Line 3"] 2))))

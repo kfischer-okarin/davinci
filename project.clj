@@ -10,7 +10,8 @@
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
-             :dev {:env {:davinci-path "."}}
+             :dev {:env {:davinci-path "."}
+                   :dependencies [[org.clojure/test.check "1.1.0"]]}
              :test {:dependencies [[pjstadig/humane-test-output "0.10.0"]]
                     :injections [(require 'pjstadig.humane-test-output)
                                  (pjstadig.humane-test-output/activate!)]}}
