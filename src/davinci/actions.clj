@@ -226,3 +226,7 @@
           command-args (pop command)]
       (eval (conj command-args editor command-f)))
     (command editor)))
+
+(defmacro bind-input [editor input command]
+  (let [normalized-command (if (list? command) (conj command 'list) command)]
+    `(assoc-in ~editor [:key-bindings ~input] ~normalized-command)))

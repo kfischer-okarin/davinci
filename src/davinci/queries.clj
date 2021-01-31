@@ -28,3 +28,6 @@
         [_ oy] (get-offset editor)
         lines-count (min (+ oy h) (count (get-buffer-lines editor)))]
     (lines/get-lines (get-buffer-lines editor) oy lines-count)))
+
+(defn get-bound-command [editor input]
+  (get-in editor [:key-bindings input]))
