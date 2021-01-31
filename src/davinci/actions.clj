@@ -1,5 +1,6 @@
 (ns davinci.actions
-  (:require [davinci.editor :refer [->Buffer]]
+  (:require [davinci.commands :as commands]
+            [davinci.editor :refer [->Buffer]]
             [davinci.lines :as lines]
             [davinci.queries :refer :all]))
 
@@ -36,11 +37,8 @@
       (set-buffer-type (second first-matching-rule) editor)
       editor)))
 
-(defn set-buffer-lines-new [editor lines]
-  (assoc-in editor [:buffer :lines] lines))
-
 (deftransform set-buffer-lines [lines editor]
-  (set-buffer-lines-new editor lines))
+  (commands/set-buffer-lines editor lines))
 
 (deftransform set-offset [offset editor]
   (assoc editor :offset offset))
@@ -219,14 +217,3 @@
 
 (deftransform recognize-file-type [file-type matcher editor]
   (update editor :file-type-matchers #(conj % [matcher file-type])))
-
-(defn execute-command [editor command]
-  (if (list? command)
-    (let [command-f (peek command)
-          command-args (pop command)]
-      (eval (conj command-args editor command-f)))
-    (command editor)))
-
-(defmacro bind-input [editor input command]
-  (let [normalized-command (if (list? command) (conj command 'list) command)]
-    `(assoc-in ~editor [:key-bindings ~input] ~normalized-command)))
