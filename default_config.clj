@@ -20,3 +20,6 @@
 (add-key-binding \j :command-mode delete-from-beginning-of-line)
 (add-key-binding \d :command-mode duplicate-line)
 (set-character-handler insert-character-at-cursor)
+
+(recognize-file-type :ruby #"\.rb\Z")
+(recognize-file-type :clojure #"\.clj\Z")

@@ -8,6 +8,9 @@
 (defn- valid-line-no? [conformed-args]
   (s/int-in-range? 0 (count (:lines conformed-args)) (:line-no conformed-args)))
 
+(defn- valid-position? [conformed-args]
+  (s/int-in-range? 0 (count (:lines conformed-args)) (:line-no conformed-args)))
+
 (s/fdef ->string
   :args (s/cat :lines ::lines)
   :ret string?)
@@ -38,6 +41,10 @@
 
 (defn get-length [lines line-no]
   (count (get-line lines line-no)))
+
+(s/fdef max-y
+  :args (s/cat :lines ::lines)
+  :ret nat-int?)
 
 (defn max-y [lines]
   (dec (count lines)))
